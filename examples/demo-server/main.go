@@ -12,11 +12,13 @@ const protocol = "2026-07-28"
 func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/mcp", mcp)
-	log.Println("MCP DriftGuard demo server: http://127.0.0.1:8787/mcp")
+	port := os.Getenv("MCPDRIFT_DEMO_PORT")
+	if port == "" { port = "8787" }
+	log.Println("MCP DriftGuard demo server: http://127.0.0.1:" + port + "/mcp")
 	if os.Getenv("MCPDRIFT_DEMO_DRIFT") == "1" {
 		log.Println("DRIFT ENABLED: export_customer_database is exposed")
 	}
-	log.Fatal(http.ListenAndServe("127.0.0.1:8787", mux))
+	log.Fatal(http.ListenAndServe("127.0.0.1:" + port, mux))
 }
 
 func mcp(w http.ResponseWriter, r *http.Request) {
