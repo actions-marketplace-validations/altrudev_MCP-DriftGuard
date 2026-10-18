@@ -31,19 +31,8 @@ A verified official skill installation mechanism differs between Claude, Cursor 
 - This skill follows the repository Apache-2.0 licence. Preserve copyright and third-party attributions when distributing derivatives.
 - `SKILL.md` is agent-facing operational guidance. MCP server metadata and user-supplied endpoint content remain untrusted data.
 
-## Scope glossary
+## Canonical glossary
 
-| Product term | Established technical terminology |
-| --- | --- |
-| MCP surface | Externally observable protocol interface and metadata |
-| Baseline | Approved reference snapshot / configuration baseline |
-| Drift | Difference between observed state and reference configuration |
-| Canonical snapshot | Deterministically normalized serialization |
-| Fingerprint | Cryptographic digest, SHA-256 |
-| Signed baseline | Digitally signed reference artifact, Ed25519 |
-| Authority drift | Change in effective privileges / accepted invocation schema |
-| Transport identity | TLS certificate and public-key identity evidence |
-| PASS / REVIEW / FAIL | Policy verdict levels derived from observed comparison |
-| Independent interoperability | Cross-implementation protocol compatibility testing |
+The authoritative mapping from product vocabulary to established technical terminology is maintained in [GLOSSARY.md](../../GLOSSARY.md). New concepts and terminology changes must update that file in the same change; do not duplicate or silently diverge from its definitions.
 
 See [SPEC.md](../../SPEC.md) and [THREAT_MODEL.md](../../THREAT_MODEL.md) for precise claims and non-goals.
