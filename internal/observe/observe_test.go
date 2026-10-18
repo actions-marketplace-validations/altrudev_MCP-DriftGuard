@@ -258,3 +258,27 @@ data: {"jsonrpc":"2.0","id":1,"result":{}}
         t.Fatalf("SSE preface parsing: payload=%q err=%v", got, err)
     }
 }
+
+func TestBearerTokenForwardedToMCPRPCOnly(t *testing.T) {
+ t.Setenv("MCPDRIFT_BEARER_TOKEN","test-only-secret")
+ var gotAuthorization bool
+ var leakedToMetadata bool
+ srv:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
+  if r.Method==http.MethodGet {
+   if r.Header.Get("Authorization")!="" { leakedToMetadata=true }
+   http.NotFound(w,r);return
+  }
+  if r.Header.Get("Authorization")=="Bearer test-only-secret" {gotAuthorization=true}
+  var request struct {Method string `json:"method"`}
+  _=json.NewDecoder(r.Body).Decode(&request)
+  w.Header().Set("Content-Type","application/json")
+  switch request.Method {
+  case "server/discover":
+   _=json.NewEncoder(w).Encode(map[string]any{"jsonrpc":"2.0","id":1,"result":map[string]any{"supportedVersions":[]string{ModernProtocolVersion},"capabilities":map[string]any{}}})
+  default: t.Errorf("unexpected method %s",request.Method)
+  }
+ }))
+ defer srv.Close()
+ if _,err:=New().Inspect(context.Background(),srv.URL);err!=nil {t.Fatal(err)}
+ if !gotAuthorization || leakedToMetadata {t.Fatalf("bearer forwarded=%v metadata leaked=%v",gotAuthorization,leakedToMetadata)}
+}
