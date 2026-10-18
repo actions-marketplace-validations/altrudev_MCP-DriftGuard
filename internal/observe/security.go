@@ -13,6 +13,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"os"
 	"regexp"
 	"strings"
 	"time"
@@ -83,6 +84,12 @@ func (c *Client) discoverAuth(ctx context.Context, endpoint *url.URL, s *canonic
 		}
 		if asu.Scheme != "https" && !(asu.Scheme == "http" && isLoopbackHost(asu.Hostname())) {
 			return fmt.Errorf("unsafe authorization server URL: %s", asu.String())
+		}
+		if asu.User != nil || asu.RawQuery != "" || asu.Fragment != "" {
+			return fmt.Errorf("authorization issuer must not contain userinfo, query or fragment")
+		}
+		if !sameOrigin(endpoint, asu) && !approvedAuthorizationIssuer(asu) {
+			return fmt.Errorf("cross-origin authorization issuer requires explicit MCPDRIFT_ALLOWED_AUTH_ISSUERS origin approval")
 		}
 		for _, well := range authorizationMetadataCandidates(asu) {
 			body, status, err := c.getJSON(ctx, well)
@@ -188,4 +195,16 @@ func tlsInfo(host, port string) (certInfo, error) {
 		certSHA256: "sha256:" + hex.EncodeToString(certSum[:]),
 		spkiSHA256: "sha256:" + hex.EncodeToString(spkiSum[:]),
 	}, nil
+}
+
+func approvedAuthorizationIssuer(issuer *url.URL) bool {
+ for _, candidate := range strings.Split(os.Getenv("MCPDRIFT_ALLOWED_AUTH_ISSUERS"), ",") {
+  candidate = strings.TrimSpace(candidate)
+  if candidate == "" { continue }
+  parsed, err := url.Parse(candidate)
+  if err != nil || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.Path != "" { continue }
+  if parsed.Scheme != "https" && !(parsed.Scheme == "http" && isLoopbackHost(parsed.Hostname())) { continue }
+  if sameOrigin(issuer, parsed) { return true }
+ }
+ return false
 }
