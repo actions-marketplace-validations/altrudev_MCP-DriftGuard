@@ -82,6 +82,10 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 	if e = cmd.Start(); e != nil {
 		return snapshot, e
 	}
+	// A descendant may inherit stdout after the parent exits. Terminate the
+	// process group at deadline independently of the blocking scanner.
+	stopTimeoutKill := context.AfterFunc(ctx, func() { terminateStdioProcess(cmd) })
+	defer stopTimeoutKill()
 	defer func() {
 		_ = stdin.Close()
 		terminateStdioProcess(cmd)
