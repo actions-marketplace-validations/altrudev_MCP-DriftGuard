@@ -6,7 +6,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"\n    "os"
+	"net/http"
+    "os"
 
 	"github.com/altrudev/MCP-DriftGuard/internal/canonical"
 )
@@ -136,7 +137,8 @@ func (c *Client) legacyRPC(ctx context.Context, endpoint, session string, payloa
 	}
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
-	req.Header.Set("MCP-Protocol-Version", LegacyProtocolVersion)\n    if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" { req.Header.Set("Authorization", "Bearer "+token) }
+	req.Header.Set("MCP-Protocol-Version", LegacyProtocolVersion)
+    if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" { req.Header.Set("Authorization", "Bearer "+token) }
 	if session != "" {
 		req.Header.Set("Mcp-Session-Id", session)
 	}
