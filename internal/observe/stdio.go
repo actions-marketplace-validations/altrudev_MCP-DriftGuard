@@ -192,7 +192,9 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 			// Advertised categories must return a corresponding JSON array,
 			// even if empty. Missing/null inventory cannot prove a clean surface.
 			var fields map[string]json.RawMessage
-			if e = json.Unmarshal(result, &fields); e != nil { return snapshot, e }
+			if e = json.Unmarshal(result, &fields); e != nil {
+				return snapshot, e
+			}
 			field := fields[category]
 			if len(field) == 0 || field[0] != '[' {
 				return snapshot, fmt.Errorf("stdio %s/list omitted required %s array", category, category)
