@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"io"
 	"sort"
 )
 
@@ -80,6 +81,11 @@ func normalizeJSON(raw json.RawMessage) (json.RawMessage, error) {
 	dec.UseNumber()
 	if err := dec.Decode(&v); err != nil {
 		return nil, err
+	}
+	var trailing any
+	if err := dec.Decode(&trailing); err != io.EOF {
+		if err == nil { return nil, fmt.Errorf("unexpected trailing JSON value") }
+		return nil, fmt.Errorf("unexpected trailing JSON data: %w", err)
 	}
 	b, err := json.Marshal(v)
 	if err != nil {
