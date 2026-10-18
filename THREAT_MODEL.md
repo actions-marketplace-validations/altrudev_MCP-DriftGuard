@@ -47,3 +47,11 @@ A party controlling both the endpoint and the observer's trusted network/PKI vie
 An approved baseline may itself describe a malicious or over-privileged server. DriftGuard proves consistency with that baseline; it does not certify the baseline as safe.
 
 Supply-chain attestations, independent multi-observer verification, and active behavioral execution are separate assurance layers.
+
+## Experimental stdio subprocess transport
+
+The stdio adapter runs a **local executable**, a higher-trust operation than passive HTTP inventory inspection. A discovered tool is never invoked, but launching the server can execute its initialization code. Operators must therefore review and approve the executable and its full ordered arguments independently of any LLM suggestion or untrusted MCP metadata.
+
+Technical controls: absolute executable path resolved and compared with `MCPDRIFT_STDIO_ALLOWED_EXEC`, nonempty ordered arguments compared with `MCPDRIFT_STDIO_ALLOWED_ARGS_JSON`, no shell invocation, minimal subprocess environment (no inherited bearer credential), bounded discovery deadline, maximum JSON-RPC message size, pagination limits and error-on-malformed-response behavior. A changed executable under the same approved path is **not** detected by the path allowlist; operators must independently pin binary provenance/digests.
+
+**Unresolved risks:** the adapter is not an operating-system sandbox, and resource use, child-process descendants, filesystem access and process privileges are not comprehensively contained on every platform. The 20-second timeout was exercised against one intentionally hung single-process fixture, not arbitrary child-process trees. A general-purpose interpreter must not be approved without pinning its script arguments. Do not use this transport to execute untrusted packages or code. Production deployment requires platform-specific containment and clean-host review.
