@@ -42,3 +42,9 @@ Added `python3 skills/mcp-driftguard/test_agent_skill.py` to GitHub Actions CI. 
 
 ## Remaining release blockers
 Real authenticated Claude/Codex skill integration; adversarial prompt-injection matrix with systematic traces; production-grade caller authorization and isolation; clean installs on all target platforms; third-party commercial terms and publication approval. No claim of full security or certification.
+
+## Follow-up: persistent local model storage and cloud isolation
+
+After the sweep, migrated the existing Ollama executable tree and model cache from temporary paths to the persistent user-owned directory `/home/ubuntu/.local/share/mcpdrift-test/`, without changing unrelated services. Updated the enabled `mcpdrift-test-ollama.service` to use those paths, restarted it and verified `active (running)`, Ollama API version `0.40.6`, and presence of `qwen2.5:0.5b-instruct`. The service remains bound to `127.0.0.1:11485`, subject to `MemoryMax=3G` and `CPUQuota=200%`. Set `OLLAMA_NO_CLOUD=true` and verified the systemd environment value.
+
+**Continuity limit:** auto-start configuration and persistence have been checked, but no VPS reboot or network disruption was performed; do not claim end-to-end recovery was tested.
