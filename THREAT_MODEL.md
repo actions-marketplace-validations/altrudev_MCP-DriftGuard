@@ -55,3 +55,10 @@ The stdio adapter runs a **local executable**, a higher-trust operation than pas
 Technical controls: absolute executable path resolved and compared with `MCPDRIFT_STDIO_ALLOWED_EXEC`, nonempty ordered arguments compared with `MCPDRIFT_STDIO_ALLOWED_ARGS_JSON`, no shell invocation, minimal subprocess environment (no inherited bearer credential), bounded discovery deadline, maximum JSON-RPC message size, pagination limits and error-on-malformed-response behavior. A changed executable under the same approved path is **not** detected by the path allowlist; operators must independently pin binary provenance/digests.
 
 **Unresolved risks:** the adapter is not an operating-system sandbox, and resource use, child-process descendants, filesystem access and process privileges are not comprehensively contained on every platform. The 20-second timeout was exercised against one intentionally hung single-process fixture, not arbitrary child-process trees. A general-purpose interpreter must not be approved without pinning its script arguments. Do not use this transport to execute untrusted packages or code. Production deployment requires platform-specific containment and clean-host review.
+
+## OAuth issuer metadata discovery trust boundary
+
+An MCP server can advertise arbitrary OAuth authorization-server URLs. DriftGuard treats these URLs as untrusted input. Off-origin issuer metadata GETs require a separately configured exact origin in `MCPDRIFT_ALLOWED_AUTH_ISSUERS`; userinfo, query strings and fragments in advertised issuer URLs are rejected. Redirect following remains disabled and metadata responses above 1 MiB are rejected.
+
+This prevents unapproved cross-origin metadata retrieval in the tested direct-URL cases, but is **not** a general SSRF proof: DNS changes/rebinding, network routing, allowed-origin compromise, proxy behavior, and comprehensive OAuth interoperability still require security review. The operator must independently verify allowlisted issuers. Credentials must not be embedded in metadata URLs.
+
