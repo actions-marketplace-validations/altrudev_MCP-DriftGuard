@@ -24,9 +24,17 @@ func TestSignedBaseline(t *testing.T) {
 }
 
 func TestVerificationKeyRejectsUnsignedBaseline(t *testing.T) {
- pub,_,_:=ed25519.GenerateKey(rand.Reader)
- a,err:=New(canonical.Snapshot{Format:"mcpdrift-snapshot/v1",Endpoint:"https://x"},nil)
- if err!=nil {t.Fatal(err)}
- if err:=a.Validate(pub);err==nil {t.Fatal("unsigned baseline accepted despite explicit verification key")}
- if err:=a.Validate(nil);err!=nil {t.Fatalf("unsigned mode should remain supported: %v",err)}
+	pub, _, _ := ed25519.GenerateKey(rand.Reader)
+	a, err := New(canonical.Snapshot{Format: "mcpdrift-snapshot/v1", Endpoint: "https://x"}, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := a.Validate(pub); err == nil {
+		t.Fatal("unsigned baseline accepted despite explicit verification key")
+	}
+	if err := a.Validate(nil); err != nil {
+		t.Fatalf("unsigned mode should remain supported: %v", err)
+	}
 }
+
+[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
