@@ -38,6 +38,7 @@ This document is the project's **authoritative terminology register**. Product n
 | SSE | Server-Sent Events | HTTP event-stream response framing for MCP transport |
 | Interoperability test | Cross-implementation compatibility test | Requires independent MCP server implementations and retained execution evidence |
 | Agent skill | Portable procedural instructions (Agent Skills) | SKILL.md guides agents; not a separate security engine |
+| OAuth issuer allowlist | Explicit origin-level authorization for external OAuth metadata discovery | Operator-controlled exact scheme-and-host approval; does not by itself authenticate the issuer or establish OAuth conformance |
 | Stdio transport | MCP JSON-RPC over standard input/output | Local executable subprocess transport; executable launch itself is privileged even when tool discovery is read-only |
 | Executable allowlist | Explicit application execution authorization | Operator-pinned absolute executable plus full ordered argument vector; not an OS sandbox or guarantee of binary content integrity |
 | Conformance harness | Reproducible compatibility / negative-security test suite | Verifies stated scenarios and expected exit codes; does not establish formal certification |
