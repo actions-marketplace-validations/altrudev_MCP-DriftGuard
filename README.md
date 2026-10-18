@@ -10,9 +10,15 @@ An MCP server can change after review: tools can appear, schemas can widen, desc
 
 It is intentionally standalone: **no LLM, no DDC dependency, no hosted account, and no telemetry are required.**
 
+## About
+
+**MCP DriftGuard** is an independent, open-source, Go-based verification tool from **Valentyn Rukhaylo / Altru.dev**. It detects deviations in the externally visible security-relevant MCP interface relative to a separately approved configuration baseline. It is intended for MCP operators, security engineers, maintainers and CI workflows. It does not certify servers, execute discovered tools, or establish backend/source integrity. The portable Agent Skill instructs compatible agents to use the same verifier, but is not a separate engine.
+
+**Documentation:** [Installation](INSTALL.md) · [Canonical glossary](GLOSSARY.md) · [Specification](SPEC.md) · [Threat model](THREAT_MODEL.md) · [Security](SECURITY.md) · [Licence](LICENSE) · [Attribution](NOTICE) · [Commercial boundary](COMMERCIAL.md).
+
 ## Status
 
-v0.1 release candidate. DriftGuard speaks the current MCP 2026-07-28 stateless protocol and falls back to legacy initialize/session-based servers through 2025-11-25. Treat the project as pre-release until interoperability testing across multiple independent production MCP implementations is complete.
+v0.1 release candidate. DriftGuard speaks the current MCP 2026-07-28 stateless protocol and falls back to legacy initialize/session-based servers through 2025-11-25. Basic discovery interoperability has been exercised against the TypeScript SDK, Python SDK and Everything reference server. Broad protocol conformance, production security acceptance and authenticated agent-host testing remain incomplete: **pre-release, not certified**.
 
 ## What it detects
 
@@ -58,6 +64,9 @@ PASS / REVIEW / FAIL
 ```
 
 ## Install from source
+
+For prerequisites, Windows guidance, trusted installation, candidate baseline approval and agent-skill setup see [INSTALL.md](INSTALL.md).
+
 
 Requires Go 1.23+.
 
