@@ -235,3 +235,11 @@ func TestPythonSDKUnsupportedVersionFallbackSignature(t *testing.T) {
 		t.Fatal("generic invalid request must not permit fallback")
 	}
 }
+
+func TestUninitializedServerAllowsLegacyHandshake(t *testing.T) {
+    body := `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized"},"id":null}`
+    if !legacyFallbackBody(body) { t.Fatal("explicit initialization requirement should permit legacy handshake") }
+    if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized because credentials missing"},"id":null}`) {
+        t.Fatal("unrelated initialization-like message must not trigger fallback")
+    }
+}
