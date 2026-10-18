@@ -2,6 +2,8 @@
 """Disposable end-to-end stdio MCP acceptance. Never launches arbitrary user executables."""
 import json
 import os
+import platform
+import time
 from pathlib import Path
 import shutil
 import subprocess
@@ -54,12 +56,29 @@ def main():
         results["env_secret_isolated"]=r.returncode==0 and "credential-leaked" not in r.stdout and "synthetic-stdio-secret" not in r.stdout
         r=call([exe,"inspect",*common,"--stdio-args-json",json.dumps(["--malformed"]),"stdio"],env)
         results["unapproved_args"]=r.returncode
+        if platform.system()=="Linux":
+            child_env=dict(env)
+            child_env["MCPDRIFT_STDIO_ALLOWED_ARGS_JSON"]=json.dumps(["--hang-with-child"])
+            began=time.monotonic()
+            r=call([exe,"inspect",*common,"--stdio-args-json",'["--hang-with-child"]',"stdio"],child_env,timeout=35)
+            elapsed=time.monotonic()-began
+            pid_file=t/"spawned.pid"
+            pid=int(pid_file.read_text()) if pid_file.exists() else None
+            time.sleep(0.15)
+            live=False
+            if pid is not None:
+                stat=Path("/proc")/str(pid)/"stat"
+                if stat.exists():
+                    state=stat.read_text().rsplit(") ",1)[-1].split(" ",1)[0]
+                    live=state not in ("Z","X")
+            results["linux_descendant_killed"]=r.returncode==3 and pid is not None and not live and 18<=elapsed<30
         results["baseline_unchanged"]=baseline.read_bytes()==before
     expected={"inspect":0,"inventory":True,"baseline":0,"unchanged":0,"drift":2,
               "detected_added_tool":True,"unapproved_executable":3,"bad_args":3,
               "baseline_unchanged":True,
               "--malformed":3,"--wrong-id":3,"--repeated-cursor":3,"--missing-inventory":3,
               "env_secret_isolated":True,"unapproved_args":3}
+    if platform.system()=="Linux":expected["linux_descendant_killed"]=True
     results["pass"]=all(results.get(k)==v for k,v in expected.items())
     print(json.dumps(results,indent=2,sort_keys=True))
     return 0 if results["pass"] else 1
