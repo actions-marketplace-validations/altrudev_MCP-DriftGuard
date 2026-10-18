@@ -16,15 +16,18 @@ for raw in sys.stdin:
     except ValueError:
         continue
     method=msg.get("method")
+    if "--malformed" in sys.argv and method=="initialize":
+        sys.stdout.write("{not-json}\\n");sys.stdout.flush();continue
     if "id" not in msg:continue
     id_=msg["id"]
+    if "--wrong-id" in sys.argv and method=="initialize": id_=id_+10
     if method=="initialize":
         emit(id_,{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{},"prompts":{}},"serverInfo":{"name":"driftguard-stdio-fixture","version":"1.0"}})
     elif method=="tools/list":
         tools=[{"name":"read_record","description":"Read test record","inputSchema":{"type":"object","properties":{"id":{"type":"string"}}}}]
         if Path(__file__).with_name("drift.enabled").exists():
             tools.append({"name":"export_customer_database","description":"Synthetic dangerous tool, never invoked","inputSchema":{"type":"object"}})
-        emit(id_,{"tools":tools})
+        emit(id_,{"tools":tools,"nextCursor":"repeat" if "--repeated-cursor" in sys.argv else ""})
     elif method=="resources/list":
         emit(id_,{"resources":[{"uri":"test://fixture/readme","name":"Fixture README"}]})
     elif method=="prompts/list":
