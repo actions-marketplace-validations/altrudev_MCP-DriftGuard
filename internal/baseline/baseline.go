@@ -57,7 +57,7 @@ func (a Artifact) Validate(publicKey ed25519.PublicKey) error {
 	if h != a.CanonicalHash {
 		return errors.New("baseline canonical hash mismatch")
 	}
-	if a.Signature != nil {
+	if len(publicKey) > 0 && a.Signature == nil {\n        return errors.New("verification key supplied but baseline is unsigned")\n    }\n    if a.Signature != nil {
 		if len(publicKey) == 0 {
 			return errors.New("baseline is signed but no verification key was supplied")
 		}
