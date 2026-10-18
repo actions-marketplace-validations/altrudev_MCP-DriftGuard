@@ -10,6 +10,11 @@ import (
 )
 
 func Normalize(s Snapshot) (Snapshot, error) {
+	// Snapshot is passed by value, but its slices may share backing arrays with
+	// the caller. Detach before sorting or normalizing nested raw JSON fields.
+	s.Tools = append([]Tool(nil), s.Tools...)
+	s.Resources = append([]Resource(nil), s.Resources...)
+	s.Prompts = append([]Prompt(nil), s.Prompts...)
 	s.ObservedAt = ""
 	sort.Slice(s.Tools, func(i, j int) bool { return s.Tools[i].Name < s.Tools[j].Name })
 	sort.Slice(s.Resources, func(i, j int) bool {
