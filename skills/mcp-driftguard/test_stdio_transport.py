@@ -44,7 +44,7 @@ def main():
         results["unapproved_executable"]=r.returncode
         r=call([exe,"inspect","--stdio-exec",fixture,"--stdio-args-json","not-json","stdio"],env)
         results["bad_args"]=r.returncode
-        for mode in ("--malformed","--wrong-id","--repeated-cursor"):
+        for mode in ("--malformed","--wrong-id","--repeated-cursor","--missing-inventory"):
             authorized_env=dict(env); authorized_env["MCPDRIFT_STDIO_ALLOWED_ARGS_JSON"]=json.dumps([mode])
             r=call([exe,"inspect",*common,"--stdio-args-json",json.dumps([mode]),"stdio"],authorized_env)
             results[mode]=r.returncode
@@ -58,7 +58,7 @@ def main():
     expected={"inspect":0,"inventory":True,"baseline":0,"unchanged":0,"drift":2,
               "detected_added_tool":True,"unapproved_executable":3,"bad_args":3,
               "baseline_unchanged":True,
-              "--malformed":3,"--wrong-id":3,"--repeated-cursor":3,
+              "--malformed":3,"--wrong-id":3,"--repeated-cursor":3,"--missing-inventory":3,
               "env_secret_isolated":True,"unapproved_args":3}
     results["pass"]=all(results.get(k)==v for k,v in expected.items())
     print(json.dumps(results,indent=2,sort_keys=True))
