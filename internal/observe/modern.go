@@ -246,7 +246,7 @@ func contains(xs []string, s string) bool {
 func legacyFallbackBody(body string) bool {
 	var rr rpcResponse
 	if json.Unmarshal([]byte(body), &rr) == nil && rr.Error != nil {
-		return rr.Error.Code == -32601 || rr.Error.Code == -32022 || ((rr.Error.Code == -32000 || rr.Error.Code == -32600) && strings.Contains(strings.ToLower(rr.Error.Message), "unsupported protocol version") && strings.Contains(rr.Error.Message, ModernProtocolVersion) && strings.Contains(strings.ToLower(rr.Error.Message), "supported versions"))
+		return rr.Error.Code == -32601 || rr.Error.Code == -32022 || (rr.Error.Code == -32000 && strings.TrimSpace(strings.ToLower(rr.Error.Message)) == "bad request: server not initialized") || ((rr.Error.Code == -32000 || rr.Error.Code == -32600) && strings.Contains(strings.ToLower(rr.Error.Message), "unsupported protocol version") && strings.Contains(rr.Error.Message, ModernProtocolVersion) && strings.Contains(strings.ToLower(rr.Error.Message), "supported versions"))
 	}
 	return false
 }
