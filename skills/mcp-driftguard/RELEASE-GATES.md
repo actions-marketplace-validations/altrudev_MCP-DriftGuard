@@ -4,13 +4,13 @@
 
 ## Core gates
 
-- [ ] Record immutable Git commit and Go toolchain version
-- [ ] Run `go test ./...` and `go vet ./...` against that commit
-- [ ] Run `go build -o mcpdrift ./cmd/mcpdrift`
+- [x] Record immutable Git commit and Go toolchain version (see FULL-SWEEP-2026-10-18.md)
+- [x] Run `go test ./...` and `go vet ./...` against that commit (VPS, 61e3e3e)
+- [x] Run `go build -o mcpdrift ./cmd/mcpdrift` (VPS, 61e3e3e)
 - [ ] Execute clean PASS and intentional capability-drift FAIL fixture scenarios; capture stdout, stderr and exit statuses
 - [ ] Verify exit codes 0–5, including corrupted baseline, wrong signature and probe failure
 - [ ] Validate no credentials or token values persist in snapshots/reports
-- [ ] Test at least two independently implemented MCP endpoints with supported protocol behavior; retain reproducible evidence
+- [x] Test at least two independently implemented MCP endpoints with supported protocol behavior; retain reproducible evidence (TypeScript and Python SDK, basic discovery only; broader protocol matrix still pending)
 - [ ] Confirm signed and unsigned baseline claims are distinguished clearly
 
 ## Agent integration gates
