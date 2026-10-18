@@ -193,6 +193,7 @@ func TestAuthMetadataPathInsertion(t *testing.T) {
 func TestExplicitUnsupportedVersionAllowsLegacyFallback(t *testing.T) {
 	var initialized bool
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet { http.NotFound(w, r); return }
 		var req struct { Method string `json:"method"` }
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		w.Header().Set("Content-Type", "application/json")
