@@ -8,6 +8,7 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
+	"errors"
 	"io"
 	"net"
 	"net/http"
@@ -130,8 +131,10 @@ func (c *Client) getJSON(ctx context.Context, target string) ([]byte, int, error
 		return nil, 0, err
 	}
 	defer res.Body.Close()
-	b, err := io.ReadAll(io.LimitReader(res.Body, 1<<20))
-	return b, res.StatusCode, err
+	b, err := io.ReadAll(io.LimitReader(res.Body, (1<<20)+1))
+	if err != nil { return nil, res.StatusCode, err }
+	if len(b) > 1<<20 { return nil, res.StatusCode, errors.New("authorization metadata exceeds 1 MiB limit") }
+	return b, res.StatusCode, nil
 }
 
 func sameOrigin(a, b *url.URL) bool {
