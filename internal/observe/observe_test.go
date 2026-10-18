@@ -246,7 +246,13 @@ func TestUninitializedServerAllowsLegacyHandshake(t *testing.T) {
 }
 
 func TestEmptySSEPrefaceIsIgnored(t *testing.T) {
-    raw := "id: preface\\ndata: \\n\\nevent: message\\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\\n\\n"
+    raw := `id: preface
+data:
+
+event: message
+data: {"jsonrpc":"2.0","id":1,"result":{}}
+
+`
     got, err := readRPCBody(strings.NewReader(raw), "text/event-stream")
     if err != nil || !json.Valid(got) {
         t.Fatalf("SSE preface parsing: payload=%q err=%v", got, err)
