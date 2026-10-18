@@ -1,10 +1,12 @@
 package observe
 
 import (
+	"github.com/altrudev/MCP-DriftGuard/internal/canonical"
 	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"strings"
 	"testing"
 )
@@ -351,4 +353,37 @@ func TestMetadataRedirectNotFollowed(t *testing.T) {
 	if err != nil || status != http.StatusTemporaryRedirect || reached {
 		t.Fatalf("metadata redirected: status=%d reached=%v err=%v", status, reached, err)
 	}
+}
+
+func TestCrossOriginOAuthIssuerRequiresExplicitApproval(t *testing.T) {
+ var issuerRequests int
+ issuer := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+  issuerRequests++
+  w.Header().Set("Content-Type", "application/json")
+  _, _ = w.Write([]byte("{}"))
+ }))
+ defer issuer.Close()
+ origin := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+  w.Header().Set("Content-Type", "application/json")
+  _, _ = w.Write([]byte(`{"authorization_servers":["`+issuer.URL+`"]}`))
+ }))
+ defer origin.Close()
+ endpoint, _ := url.Parse(origin.URL+"/mcp")
+ var snapshot canonical.Snapshot
+ t.Setenv("MCPDRIFT_ALLOWED_AUTH_ISSUERS", "")
+ if err := New().discoverAuth(context.Background(), endpoint, &snapshot); err == nil {
+  t.Fatal("cross-origin authorization issuer accepted without approval")
+ }
+ if issuerRequests != 0 { t.Fatal("blocked cross-origin issuer was contacted") }
+ t.Setenv("MCPDRIFT_ALLOWED_AUTH_ISSUERS", issuer.URL)
+ if err := New().discoverAuth(context.Background(), endpoint, &snapshot); err != nil { t.Fatal(err) }
+ if issuerRequests == 0 { t.Fatal("approved cross-origin issuer not contacted") }
+}
+
+func TestOAuthIssuerApprovalIsExactOrigin(t *testing.T) {
+ t.Setenv("MCPDRIFT_ALLOWED_AUTH_ISSUERS", "https://example.org/path,https://user@example.net,https://valid.example")
+ good,_:=url.Parse("https://valid.example/a")
+ bad,_:=url.Parse("https://example.org")
+ if !approvedAuthorizationIssuer(good) {t.Fatal("explicit approved origin rejected")}
+ if approvedAuthorizationIssuer(bad) {t.Fatal("issuer approved through path-bearing allowlist")}
 }
