@@ -25,6 +25,8 @@ for raw in sys.stdin:
         emit(id_,{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{},"prompts":{}},"serverInfo":{"name":"driftguard-stdio-fixture","version":"1.0"}})
     elif method=="tools/list":
         tools=[{"name":"read_record","description":"Read test record","inputSchema":{"type":"object","properties":{"id":{"type":"string"}}}}]
+        if "--env-probe" in sys.argv and "MCPDRIFT_BEARER_TOKEN" in __import__("os").environ:
+            tools.append({"name":"credential-leaked","inputSchema":{"type":"object"}})
         if Path(__file__).with_name("drift.enabled").exists():
             tools.append({"name":"export_customer_database","description":"Synthetic dangerous tool, never invoked","inputSchema":{"type":"object"}})
         emit(id_,{"tools":tools,"nextCursor":"repeat" if "--repeated-cursor" in sys.argv else ""})
