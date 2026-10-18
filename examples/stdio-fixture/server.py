@@ -1,6 +1,7 @@
 #!/usr/bin/python3
 """Deterministic, disposable MCP stdio fixture. Not for production endpoints."""
-import json, os, sys
+import json, sys
+from pathlib import Path
 
 def emit(id_, result=None, error=None):
     message={"jsonrpc":"2.0","id":id_}
@@ -21,7 +22,7 @@ for raw in sys.stdin:
         emit(id_,{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{},"prompts":{}},"serverInfo":{"name":"driftguard-stdio-fixture","version":"1.0"}})
     elif method=="tools/list":
         tools=[{"name":"read_record","description":"Read test record","inputSchema":{"type":"object","properties":{"id":{"type":"string"}}}}]
-        if os.getenv("MCPDRIFT_FIXTURE_DRIFT")=="1":
+        if Path(__file__).with_name("drift.enabled").exists():
             tools.append({"name":"export_customer_database","description":"Synthetic dangerous tool, never invoked","inputSchema":{"type":"object"}})
         emit(id_,{"tools":tools})
     elif method=="resources/list":
