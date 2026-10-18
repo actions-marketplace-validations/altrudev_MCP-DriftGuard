@@ -27,6 +27,9 @@ for raw in sys.stdin:
     if method=="initialize":
         emit(id_,{"protocolVersion":"2025-11-25","capabilities":{"tools":{},"resources":{},"prompts":{}},"serverInfo":{"name":"driftguard-stdio-fixture","version":"1.0"}})
     elif method=="tools/list":
+        if "--missing-inventory" in sys.argv:
+            emit(id_,{"nextCursor":""})
+            continue
         tools=[{"name":"read_record","description":"Read test record","inputSchema":{"type":"object","properties":{"id":{"type":"string"}}}}]
         if "--env-probe" in sys.argv and "MCPDRIFT_BEARER_TOKEN" in __import__("os").environ:
             tools.append({"name":"credential-leaked","inputSchema":{"type":"object"}})
