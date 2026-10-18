@@ -45,14 +45,16 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
  stdout,e := cmd.StdoutPipe();if e != nil {return snapshot,e}
  if e=cmd.Start();e != nil {return snapshot,e}
  defer func(){_ = stdin.Close();if cmd.Process != nil {_ = cmd.Process.Kill()};_ = cmd.Wait()}()
- reader := bufio.NewReaderSize(stdout,65536)
+ reader := bufio.NewScanner(stdout)
+ reader.Buffer(make([]byte, 65536), stdioMaxLine)
  send := func(v any) error {data,e:=json.Marshal(v);if e!=nil{return e};data=append(data,'\n');_,e=stdin.Write(data);return e}
  read := func(id int) (json.RawMessage,error) {
   for i:=0;i<32;i++ {
-   line,e:=reader.ReadSlice('\n')
-   if errors.Is(e,bufio.ErrBufferFull) {return nil,errors.New("stdio JSON-RPC line exceeds safe reader buffer")}
-   if e!=nil {return nil,fmt.Errorf("stdio response: %w",e)}
-   if len(line)>stdioMaxLine {return nil,errors.New("stdio response exceeded size limit")}
+   if !reader.Scan() {
+    if e:=reader.Err();e!=nil{return nil,fmt.Errorf("stdio response: %w",e)}
+    return nil,errors.New("stdio endpoint closed before response")
+   }
+   line:=reader.Bytes()
    var response struct{ID *int `json:"id"`; Result json.RawMessage `json:"result"`;Error *struct{Code int `json:"code"`;Message string `json:"message"`} `json:"error"`}
    if e=json.Unmarshal(line,&response);e!=nil {return nil,fmt.Errorf("invalid stdio JSON-RPC: %w",e)}
    if response.ID == nil {continue}
