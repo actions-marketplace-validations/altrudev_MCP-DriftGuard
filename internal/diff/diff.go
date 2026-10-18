@@ -41,6 +41,9 @@ func Compare(old, live canonical.Snapshot) Result {
 	if old.Endpoint != live.Endpoint {
 		changes = append(changes, Change{High, "identity", "endpoint", "changed", old.Endpoint, live.Endpoint, "MCP endpoint changed"})
 	}
+	if old.Server.Version != live.Server.Version {
+		changes = append(changes, Change{Low, "metadata", "server.version", "changed", old.Server.Version, live.Server.Version, "self-reported server version changed"})
+	}
 	if old.Server.Name != live.Server.Name {
 		changes = append(changes, Change{Medium, "metadata", "server.name", "changed", old.Server.Name, live.Server.Name, "self-reported server name changed"})
 	}
