@@ -46,5 +46,3 @@ func TestSemanticallyIdenticalJSONIsNotDrift(t *testing.T) {
 		t.Fatalf("format-only changes must not count as drift: %#v", r)
 	}
 }
-
-[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
