@@ -96,3 +96,17 @@ python3 skills/mcp-driftguard/test_stdio_transport.py
 ```
 
 **Remaining limitations:** no production-grade OS sandbox or child-process-tree isolation, resource controls are incomplete, Windows stdio execution has not been independently exercised, and the model cannot grant executable permissions. Do not use stdio mode on untrusted executables.
+
+## Cross-origin OAuth issuer metadata
+
+MCP DriftGuard fetches protected-resource metadata from the MCP endpoint origin. **Discovered authorization-server issuer metadata hosted on a different origin is not fetched unless the operator explicitly approves its origin.** This avoids silently contacting arbitrary third-party URLs supplied by an MCP endpoint.
+
+For example, when you have separately verified and approved an OAuth provider:
+
+```sh
+export MCPDRIFT_ALLOWED_AUTH_ISSUERS="https://auth.example.com"
+./mcpdrift inspect https://mcp.example.com/mcp
+```
+
+The variable accepts comma-separated exact URL origins with no path, credentials, query, or fragment. It does not delegate trust to an arbitrary URL path and does not perform OAuth login or token refresh. Same-origin issuer metadata and explicitly approved origins retain normal TLS verification. An unapproved cross-origin issuer causes a failed probe rather than silent acceptance.
+
