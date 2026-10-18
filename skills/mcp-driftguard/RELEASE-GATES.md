@@ -18,9 +18,11 @@
 - [x] Run stdio discovery through an exact approved executable and complete argument vector, with no shell or inherited token; cover tool/resource/prompt inventory, 0/2/3 exit classifications, malformed JSON-RPC, ID mismatch and pagination cursor loops
 - [x] Compare MCP Everything reference-server stdio inventory with previous HTTP inventory for the same unprivileged client capability context
 - [x] Run versioned local conformance runner (Go unit/race/vet, docs, HTTP, stdio) on pinned source revision
-- [ ] Demonstrate native stdio executable isolation under an independent OS sandbox and process-tree containment
+- [x] Verify Linux stdio process-group timeout terminates a same-group descendant (single disposable fork fixture; full sandbox escape resistance NOT established)
+- [x] Reject oversized protected-resource / authorization metadata and prevent unapproved cross-origin OAuth issuer metadata fetches (targeted loopback regression tests)
+- [ ] Demonstrate native stdio executable isolation under an independent OS sandbox, including process descendants escaping their original process group
 - [ ] Obtain Horizon Shield's independent rerun confirmation for B0/B2/B6/B7 repaired inputs
-- [ ] Complete malformed transport, authorization metadata and schema-classification fuzz suites beyond canonical JSON
+- [ ] Complete broad malformed transport, authorization metadata, DNS rebinding, OAuth interoperability and schema-classification fuzz suites beyond targeted regressions
 - [ ] Verify hosted CI run and official release artifacts across Linux/macOS/Windows, with checksums and licensing
 
 ## Agent integration gates
