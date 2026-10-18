@@ -194,16 +194,21 @@ func TestAuthMetadataPathInsertion(t *testing.T) {
 func TestExplicitUnsupportedVersionAllowsLegacyFallback(t *testing.T) {
 	var initialized bool
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodGet { http.NotFound(w, r); return }
-		var req struct { Method string `json:"method"` }
+		if r.Method == http.MethodGet {
+			http.NotFound(w, r)
+			return
+		}
+		var req struct {
+			Method string `json:"method"`
+		}
 		_ = json.NewDecoder(r.Body).Decode(&req)
 		w.Header().Set("Content-Type", "application/json")
 		switch req.Method {
 		case "server/discover":
 			w.WriteHeader(http.StatusBadRequest)
-			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc":"2.0","id":nil,"error":map[string]any{"code":-32000,"message":"Bad Request: Unsupported protocol version: 2026-07-28 (supported versions: 2025-11-25, 2025-06-18)"}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": nil, "error": map[string]any{"code": -32000, "message": "Bad Request: Unsupported protocol version: 2026-07-28 (supported versions: 2025-11-25, 2025-06-18)"}})
 		case "initialize":
-			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc":"2.0","id":1,"result":map[string]any{"protocolVersion":LegacyProtocolVersion,"capabilities":map[string]any{},"serverInfo":map[string]any{"name":"external-style","version":"1"}}})
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": map[string]any{"protocolVersion": LegacyProtocolVersion, "capabilities": map[string]any{}, "serverInfo": map[string]any{"name": "external-style", "version": "1"}}})
 		case "notifications/initialized":
 			initialized = true
 			w.WriteHeader(http.StatusAccepted)
@@ -214,7 +219,7 @@ func TestExplicitUnsupportedVersionAllowsLegacyFallback(t *testing.T) {
 	defer srv.Close()
 	s, err := New().Inspect(context.Background(), srv.URL)
 	if err != nil || s.Server.ProtocolVersion != LegacyProtocolVersion || !initialized {
-		t.Fatalf("expected safe legacy fallback, snapshot=%#v err=%v initialized=%v",s.Server,err,initialized)
+		t.Fatalf("expected safe legacy fallback, snapshot=%#v err=%v initialized=%v", s.Server, err, initialized)
 	}
 }
 
@@ -238,47 +243,63 @@ func TestPythonSDKUnsupportedVersionFallbackSignature(t *testing.T) {
 }
 
 func TestUninitializedServerAllowsLegacyHandshake(t *testing.T) {
-    body := `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized"},"id":null}`
-    if !legacyFallbackBody(body) { t.Fatal("explicit initialization requirement should permit legacy handshake") }
-    if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized because credentials missing"},"id":null}`) {
-        t.Fatal("unrelated initialization-like message must not trigger fallback")
-    }
+	body := `{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized"},"id":null}`
+	if !legacyFallbackBody(body) {
+		t.Fatal("explicit initialization requirement should permit legacy handshake")
+	}
+	if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized because credentials missing"},"id":null}`) {
+		t.Fatal("unrelated initialization-like message must not trigger fallback")
+	}
 }
 
 func TestEmptySSEPrefaceIsIgnored(t *testing.T) {
-    raw := `id: preface
+	raw := `id: preface
 data:
 
 event: message
 data: {"jsonrpc":"2.0","id":1,"result":{}}
 
 `
-    got, err := readRPCBody(strings.NewReader(raw), "text/event-stream")
-    if err != nil || !json.Valid(got) {
-        t.Fatalf("SSE preface parsing: payload=%q err=%v", got, err)
-    }
+	got, err := readRPCBody(strings.NewReader(raw), "text/event-stream")
+	if err != nil || !json.Valid(got) {
+		t.Fatalf("SSE preface parsing: payload=%q err=%v", got, err)
+	}
 }
 
 func TestBearerTokenForwardedToMCPRPCOnly(t *testing.T) {
- t.Setenv("MCPDRIFT_BEARER_TOKEN","test-only-secret")
- var gotAuthorization bool
- var leakedToMetadata bool
- srv:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
-  if r.Method==http.MethodGet {
-   if r.Header.Get("Authorization")!="" { leakedToMetadata=true }
-   http.NotFound(w,r);return
-  }
-  if r.Header.Get("Authorization")=="Bearer test-only-secret" {gotAuthorization=true}
-  var request struct {Method string `json:"method"`}
-  _=json.NewDecoder(r.Body).Decode(&request)
-  w.Header().Set("Content-Type","application/json")
-  switch request.Method {
-  case "server/discover":
-   _=json.NewEncoder(w).Encode(map[string]any{"jsonrpc":"2.0","id":1,"result":map[string]any{"supportedVersions":[]string{ModernProtocolVersion},"capabilities":map[string]any{}}})
-  default: t.Errorf("unexpected method %s",request.Method)
-  }
- }))
- defer srv.Close()
- if _,err:=New().Inspect(context.Background(),srv.URL);err!=nil {t.Fatal(err)}
- if !gotAuthorization || leakedToMetadata {t.Fatalf("bearer forwarded=%v metadata leaked=%v",gotAuthorization,leakedToMetadata)}
+	t.Setenv("MCPDRIFT_BEARER_TOKEN", "test-only-secret")
+	var gotAuthorization bool
+	var leakedToMetadata bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodGet {
+			if r.Header.Get("Authorization") != "" {
+				leakedToMetadata = true
+			}
+			http.NotFound(w, r)
+			return
+		}
+		if r.Header.Get("Authorization") == "Bearer test-only-secret" {
+			gotAuthorization = true
+		}
+		var request struct {
+			Method string `json:"method"`
+		}
+		_ = json.NewDecoder(r.Body).Decode(&request)
+		w.Header().Set("Content-Type", "application/json")
+		switch request.Method {
+		case "server/discover":
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc": "2.0", "id": 1, "result": map[string]any{"supportedVersions": []string{ModernProtocolVersion}, "capabilities": map[string]any{}}})
+		default:
+			t.Errorf("unexpected method %s", request.Method)
+		}
+	}))
+	defer srv.Close()
+	if _, err := New().Inspect(context.Background(), srv.URL); err != nil {
+		t.Fatal(err)
+	}
+	if !gotAuthorization || leakedToMetadata {
+		t.Fatalf("bearer forwarded=%v metadata leaked=%v", gotAuthorization, leakedToMetadata)
+	}
 }
+
+[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
