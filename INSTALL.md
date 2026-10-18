@@ -73,7 +73,7 @@ See the [canonical glossary](GLOSSARY.md), [threat model](THREAT_MODEL.md) and [
 
 DriftGuard can inspect a local MCP server over stdin/stdout with the same snapshot and baseline verifier as HTTP. This transport is **pre-release**. It does not execute discovered MCP tools, but starting a local executable itself is a privileged action.
 
-**Only launch an executable you have inspected and approved.** The verifier requires an exact, absolute executable allowlist via `MCPDRIFT_STDIO_ALLOWED_EXEC`; it never passes commands to a shell. Process arguments must come from a trusted operator, never from an LLM or MCP server metadata. The subprocess receives a minimal environment (no inherited bearer token), and its discovery session has a deadline.
+**Only launch an executable you have inspected and approved.** The verifier requires an exact, absolute executable allowlist via `MCPDRIFT_STDIO_ALLOWED_EXEC`, plus an independently authorized argument vector via `MCPDRIFT_STDIO_ALLOWED_ARGS_JSON` if nonempty; it never passes commands to a shell. Process arguments must come from a trusted operator, never from an LLM or MCP server metadata. The subprocess receives a minimal environment (no inherited bearer token), and its discovery session has a deadline.
 
 For the disposable Python fixture (Linux/macOS example):
 
@@ -87,7 +87,7 @@ export MCPDRIFT_STDIO_ALLOWED_EXEC="$FIXTURE"
 ./mcpdrift verify --stdio-exec "$FIXTURE" --baseline stdio.candidate.json stdio
 ```
 
-For trusted executable arguments supply `--stdio-args-json '["--safe-option"]'`. The endpoint argument must be exactly `stdio`; the full executable path and argument vector are committed into the snapshot's endpoint identity. This does not authenticate executable contents; pin a binary digest and review changes in the operator's deployment process.
+For trusted executable arguments, independently approve the exact ordered arguments before invoking the CLI:\n\n```sh\nexport MCPDRIFT_STDIO_ALLOWED_ARGS_JSON='["--safe-option"]'\n./mcpdrift inspect --stdio-exec "$FIXTURE" --stdio-args-json '["--safe-option"]' stdio\n```\n\n**Both the executable path and every argument must match the trusted allowlist.** If no argument authorization is configured, only the empty argument vector is accepted. Never approve a generic interpreter with attacker-controlled script paths or flags. The endpoint argument must be exactly `stdio`; the full executable path and argument vector are committed into the snapshot's endpoint identity. This does not authenticate executable contents; pin a binary digest and review changes in the operator's deployment process.
 
 Reproducible local test, without external services:
 
