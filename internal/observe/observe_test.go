@@ -189,3 +189,38 @@ func TestAuthMetadataPathInsertion(t *testing.T) {
 		t.Fatalf("authorization metadata not captured: %#v", s.Auth)
 	}
 }
+
+func TestExplicitUnsupportedVersionAllowsLegacyFallback(t *testing.T) {
+	var initialized bool
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var req struct { Method string `json:"method"` }
+		_ = json.NewDecoder(r.Body).Decode(&req)
+		w.Header().Set("Content-Type", "application/json")
+		switch req.Method {
+		case "server/discover":
+			w.WriteHeader(http.StatusBadRequest)
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc":"2.0","id":nil,"error":map[string]any{"code":-32000,"message":"Bad Request: Unsupported protocol version: 2026-07-28 (supported versions: 2025-11-25, 2025-06-18)"}})
+		case "initialize":
+			_ = json.NewEncoder(w).Encode(map[string]any{"jsonrpc":"2.0","id":1,"result":map[string]any{"protocolVersion":LegacyProtocolVersion,"capabilities":map[string]any{},"serverInfo":map[string]any{"name":"external-style","version":"1"}}})
+		case "notifications/initialized":
+			initialized = true
+			w.WriteHeader(http.StatusAccepted)
+		default:
+			http.Error(w, "unexpected method", http.StatusBadRequest)
+		}
+	}))
+	defer srv.Close()
+	s, err := New().Inspect(context.Background(), srv.URL)
+	if err != nil || s.Server.ProtocolVersion != LegacyProtocolVersion || !initialized {
+		t.Fatalf("expected safe legacy fallback, snapshot=%#v err=%v initialized=%v",s.Server,err,initialized)
+	}
+}
+
+func TestGenericBadRequestMustNotDowngrade(t *testing.T) {
+	if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Invalid credentials"}}`) {
+		t.Fatal("generic error allowed downgrade")
+	}
+	if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Unsupported protocol version: 2026-07-28"}}`) {
+		t.Fatal("unsubstantiated version error allowed downgrade")
+	}
+}
