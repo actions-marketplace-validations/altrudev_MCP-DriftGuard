@@ -112,7 +112,9 @@ func compareTools(a, b []canonical.Tool) []Change {
 			out = append(out, Change{sev, "authority", "tools." + n + ".input_schema", kind, rawValue(x.InputSchema), rawValue(y.InputSchema), msg})
 		}
 		if !rawEqual(x.Annotations, y.Annotations) {
-			out = append(out, Change{Medium, "capability", "tools." + n + ".annotations", "changed", rawValue(x.Annotations), rawValue(y.Annotations), "tool annotations changed"})
+            sev := Medium
+            if annotationAuthorityExpanded(x.Annotations, y.Annotations) { sev = High }
+			out = append(out, Change{sev, "capability", "tools." + n + ".annotations", "changed", rawValue(x.Annotations), rawValue(y.Annotations), "tool annotations changed"})
 		}
 	}
 	for n := range bm {
@@ -159,7 +161,18 @@ func classifySchemaChange(before, after json.RawMessage) (string, Severity, stri
 			narrow = true
 		}
 	}
-	if widen {
+	if !widen {
+        oldProps, _ := a["properties"].(map[string]any)
+        newProps, _ := b["properties"].(map[string]any)
+        oldAdditional, oldExplicit := a["additionalProperties"].(bool)
+        newAdditional, newExplicit := b["additionalProperties"].(bool)
+        if oldExplicit && newExplicit && !oldAdditional && !newAdditional {
+            for name := range newProps {
+                if _, exists := oldProps[name]; !exists { widen = true }
+            }
+        }
+    }
+    if widen {
 		return "widened", High, "tool input schema widened accepted authority/capability"
 	}
 	if narrow {
@@ -287,9 +300,23 @@ func rawValue(a json.RawMessage) any {
 	return string(a)
 }
 
+func annotationAuthorityExpanded(before, after json.RawMessage) bool {
+ var a, b map[string]any
+ if json.Unmarshal(before, &a) != nil || json.Unmarshal(after, &b) != nil { return true }
+ for _, key := range []string{"readOnlyHint", "idempotentHint"} {
+  old, oldOK := a[key].(bool); now, nowOK := b[key].(bool)
+  if oldOK && nowOK && old && !now { return true }
+ }
+ for _, key := range []string{"destructiveHint", "openWorldHint"} {
+  old, oldOK := a[key].(bool); now, nowOK := b[key].(bool)
+  if oldOK && nowOK && !old && now { return true }
+ }
+ return false
+}
+
 func sensitiveDescriptionDelta(a, b string) bool {
 	s := strings.ToLower(a + " " + b)
-	for _, w := range []string{"delete", "export", "write", "manage", "admin", "execute", "upload", "download", "credential", "database"} {
+	for _, w := range []string{"delete", "export", "write", "manage", "admin", "execute", "upload", "download", "credential", "database", "always call", "do not ask the user", "ignore previous", "treat its answer as final"} {
 		if strings.Contains(s, w) {
 			return true
 		}
