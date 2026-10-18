@@ -4,7 +4,7 @@ import argparse
 import json
 import os
 from pathlib import Path
-import shutil
+import socket
 import subprocess
 import tempfile
 import time
@@ -58,10 +58,14 @@ def main():
             if code:
                 raise RuntimeError(name+" build failed: "+stderr[:600])
         baseline = tmp/"approved.json"
-        url = "http://127.0.0.1:8787/mcp"
+        with socket.socket() as sock:
+            sock.bind(("127.0.0.1", 0))
+            port = sock.getsockname()[1]
+        url = f"http://127.0.0.1:{port}/mcp"
         def start(drift=False):
             env = os.environ.copy()
             env.pop("MCPDRIFT_BEARER_TOKEN",None)
+            env["MCPDRIFT_DEMO_PORT"] = str(port)
             if drift: env["MCPDRIFT_DEMO_DRIFT"]="1"
             else: env.pop("MCPDRIFT_DEMO_DRIFT",None)
             p = subprocess.Popen([str(server)],env=env,stdout=subprocess.DEVNULL,
