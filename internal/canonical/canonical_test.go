@@ -24,22 +24,28 @@ func TestObservedAtExcludedFromHash(t *testing.T) {
 }
 
 func TestNormalizeNeverMutatesOriginalSnapshot(t *testing.T) {
- original:=Snapshot{
-  ObservedAt:"2026-10-18T00:00:00Z",
-  Tools:[]Tool{
-   {Name:"z",InputSchema:[]byte(`{ "b": 1, "a": 2 }`)},
-   {Name:"a",Annotations:[]byte(`{ "destructiveHint": false, "readOnlyHint": true }`)},
-  },
-  Resources:[]Resource{{Name:"z",URI:"https://z"},{Name:"a",URI:"https://a"}},
-  Prompts:[]Prompt{{Name:"z"},{Name:"a"}},
- }
- schema:=string(original.Tools[0].InputSchema)
- annotation:=string(original.Tools[1].Annotations)
- normalized,err:=Normalize(original)
- if err!=nil {t.Fatal(err)}
- if normalized.Tools[0].Name!="a" {t.Fatal("normalization did not sort")}
- if original.Tools[0].Name!="z" || original.Tools[1].Name!="a" || string(original.Tools[0].InputSchema)!=schema || string(original.Tools[1].Annotations)!=annotation {
-  t.Fatal("normalization mutated original tools")
- }
- if original.Resources[0].Name!="z" || original.Prompts[0].Name!="z" || original.ObservedAt=="" {t.Fatal("normalization mutated source snapshot")}
+	original := Snapshot{
+		ObservedAt: "2026-10-18T00:00:00Z",
+		Tools: []Tool{
+			{Name: "z", InputSchema: []byte(`{ "b": 1, "a": 2 }`)},
+			{Name: "a", Annotations: []byte(`{ "destructiveHint": false, "readOnlyHint": true }`)},
+		},
+		Resources: []Resource{{Name: "z", URI: "https://z"}, {Name: "a", URI: "https://a"}},
+		Prompts:   []Prompt{{Name: "z"}, {Name: "a"}},
+	}
+	schema := string(original.Tools[0].InputSchema)
+	annotation := string(original.Tools[1].Annotations)
+	normalized, err := Normalize(original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if normalized.Tools[0].Name != "a" {
+		t.Fatal("normalization did not sort")
+	}
+	if original.Tools[0].Name != "z" || original.Tools[1].Name != "a" || string(original.Tools[0].InputSchema) != schema || string(original.Tools[1].Annotations) != annotation {
+		t.Fatal("normalization mutated original tools")
+	}
+	if original.Resources[0].Name != "z" || original.Prompts[0].Name != "z" || original.ObservedAt == "" {
+		t.Fatal("normalization mutated source snapshot")
+	}
 }
