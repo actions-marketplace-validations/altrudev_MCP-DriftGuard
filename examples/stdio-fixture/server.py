@@ -17,7 +17,7 @@ for raw in sys.stdin:
         continue
     method=msg.get("method")
     if "--malformed" in sys.argv and method=="initialize":
-        sys.stdout.write("{not-json}\\n");sys.stdout.flush();continue
+        sys.stdout.write("{not-json}" + chr(10));sys.stdout.flush();continue
     if "id" not in msg:continue
     id_=msg["id"]
     if "--wrong-id" in sys.argv and method=="initialize": id_=id_+10
