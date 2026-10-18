@@ -9,7 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-    "os"
+	"os"
 	"strings"
 
 	"github.com/altrudev/MCP-DriftGuard/internal/canonical"
@@ -169,7 +169,9 @@ func (c *Client) modernRPC(ctx context.Context, endpoint string, id int, method 
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("MCP-Protocol-Version", ModernProtocolVersion)
 	req.Header.Set("Mcp-Method", method)
-    if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" { req.Header.Set("Authorization", "Bearer "+token) }
+	if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 
 	res, err := c.HTTP.Do(req)
 	if err != nil {
@@ -225,7 +227,9 @@ func readRPCBody(r io.Reader, contentType string) ([]byte, error) {
 			line := sc.Text()
 			if strings.HasPrefix(line, "data:") {
 				payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
-				if payload == "" { continue } // Some servers emit an empty SSE data preface before the response event.
+				if payload == "" {
+					continue
+				} // Some servers emit an empty SSE data preface before the response event.
 				return []byte(payload), nil
 			}
 		}
@@ -254,3 +258,5 @@ func legacyFallbackBody(body string) bool {
 	}
 	return false
 }
+
+[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
