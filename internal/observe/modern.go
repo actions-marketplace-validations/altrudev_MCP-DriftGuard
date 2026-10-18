@@ -8,7 +8,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
-	"net/http"
+	"net/http"\n    "os"
 	"strings"
 
 	"github.com/altrudev/MCP-DriftGuard/internal/canonical"
@@ -167,7 +167,7 @@ func (c *Client) modernRPC(ctx context.Context, endpoint string, id int, method 
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("MCP-Protocol-Version", ModernProtocolVersion)
-	req.Header.Set("Mcp-Method", method)
+	req.Header.Set("Mcp-Method", method)\n    if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" { req.Header.Set("Authorization", "Bearer "+token) }
 
 	res, err := c.HTTP.Do(req)
 	if err != nil {
