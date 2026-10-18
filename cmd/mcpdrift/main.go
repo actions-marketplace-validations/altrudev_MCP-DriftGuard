@@ -184,13 +184,19 @@ func usage() {
 	fmt.Fprintln(os.Stderr, "Usage: mcpdrift <inspect|baseline|verify|diff|keygen|version> [options]")
 }
 
-func inspectTarget(endpoint, executable, argsJSON string) (canonical.Snapshot,error) {
- if executable == "" {
-  if endpoint == "stdio" { return canonical.Snapshot{},errors.New("stdio endpoint requires --stdio-exec")}
-  return observe.New().Inspect(context.Background(),endpoint)
- }
- if endpoint != "stdio" {return canonical.Snapshot{},errors.New("stdio executable requires explicit stdio endpoint")}
- var args []string
- if err:=json.Unmarshal([]byte(argsJSON),&args);err!=nil {return canonical.Snapshot{},fmt.Errorf("stdio args must be JSON array: %w",err)}
- return observe.InspectStdio(context.Background(),executable,args)
+func inspectTarget(endpoint, executable, argsJSON string) (canonical.Snapshot, error) {
+	if executable == "" {
+		if endpoint == "stdio" {
+			return canonical.Snapshot{}, errors.New("stdio endpoint requires --stdio-exec")
+		}
+		return observe.New().Inspect(context.Background(), endpoint)
+	}
+	if endpoint != "stdio" {
+		return canonical.Snapshot{}, errors.New("stdio executable requires explicit stdio endpoint")
+	}
+	var args []string
+	if err := json.Unmarshal([]byte(argsJSON), &args); err != nil {
+		return canonical.Snapshot{}, fmt.Errorf("stdio args must be JSON array: %w", err)
+	}
+	return observe.InspectStdio(context.Background(), executable, args)
 }
