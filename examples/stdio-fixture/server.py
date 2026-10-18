@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Deterministic, disposable MCP stdio fixture. Not for production endpoints."""
-import json, sys
+import json, sys, time
 from pathlib import Path
 
 def emit(id_, result=None, error=None):
@@ -16,6 +16,9 @@ for raw in sys.stdin:
     except ValueError:
         continue
     method=msg.get("method")
+    if "--hang" in sys.argv:
+        time.sleep(60)
+        continue
     if "--malformed" in sys.argv and method=="initialize":
         sys.stdout.write("{not-json}" + chr(10));sys.stdout.flush();continue
     if "id" not in msg:continue
