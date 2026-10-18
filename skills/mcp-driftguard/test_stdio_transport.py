@@ -47,11 +47,15 @@ def main():
         for mode in ("--malformed","--wrong-id","--repeated-cursor"):
             r=call([exe,"inspect",*common,"--stdio-args-json",json.dumps([mode]),"stdio"],env)
             results[mode]=r.returncode
+        secret_env=dict(env);secret_env["MCPDRIFT_BEARER_TOKEN"]="synthetic-stdio-secret"
+        r=call([exe,"inspect",*common,"--stdio-args-json",json.dumps(["--env-probe"]),"--format","json","stdio"],secret_env)
+        results["env_secret_isolated"]=r.returncode==0 and "credential-leaked" not in r.stdout and "synthetic-stdio-secret" not in r.stdout
         results["baseline_unchanged"]=baseline.read_bytes()==before
     expected={"inspect":0,"inventory":True,"baseline":0,"unchanged":0,"drift":2,
               "detected_added_tool":True,"unapproved_executable":3,"bad_args":3,
               "baseline_unchanged":True,
-              "--malformed":3,"--wrong-id":3,"--repeated-cursor":3}
+              "--malformed":3,"--wrong-id":3,"--repeated-cursor":3,
+              "env_secret_isolated":True}
     results["pass"]=all(results.get(k)==v for k,v in expected.items())
     print(json.dumps(results,indent=2,sort_keys=True))
     return 0 if results["pass"] else 1
