@@ -49,3 +49,10 @@ func TestNormalizeNeverMutatesOriginalSnapshot(t *testing.T) {
 		t.Fatal("normalization mutated source snapshot")
 	}
 }
+
+func TestCanonicalRejectsTrailingJSON(t *testing.T) {
+ for _, raw := range []string{`{"type":"object"}{"type":"string"}`, `{"type":"object"} garbage`} {
+  snapshot:=Snapshot{Tools:[]Tool{{Name:"bad",InputSchema:[]byte(raw)}}}
+  if _,err:=Hash(snapshot);err==nil {t.Fatalf("accepted trailing JSON: %q",raw)}
+ }
+}
