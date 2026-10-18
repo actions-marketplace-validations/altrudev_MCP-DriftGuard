@@ -198,13 +198,21 @@ func tlsInfo(host, port string) (certInfo, error) {
 }
 
 func approvedAuthorizationIssuer(issuer *url.URL) bool {
- for _, candidate := range strings.Split(os.Getenv("MCPDRIFT_ALLOWED_AUTH_ISSUERS"), ",") {
-  candidate = strings.TrimSpace(candidate)
-  if candidate == "" { continue }
-  parsed, err := url.Parse(candidate)
-  if err != nil || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.Path != "" { continue }
-  if parsed.Scheme != "https" && !(parsed.Scheme == "http" && isLoopbackHost(parsed.Hostname())) { continue }
-  if sameOrigin(issuer, parsed) { return true }
- }
- return false
+	for _, candidate := range strings.Split(os.Getenv("MCPDRIFT_ALLOWED_AUTH_ISSUERS"), ",") {
+		candidate = strings.TrimSpace(candidate)
+		if candidate == "" {
+			continue
+		}
+		parsed, err := url.Parse(candidate)
+		if err != nil || parsed.User != nil || parsed.RawQuery != "" || parsed.Fragment != "" || parsed.Path != "" {
+			continue
+		}
+		if parsed.Scheme != "https" && !(parsed.Scheme == "http" && isLoopbackHost(parsed.Hostname())) {
+			continue
+		}
+		if sameOrigin(issuer, parsed) {
+			return true
+		}
+	}
+	return false
 }
