@@ -7,7 +7,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-    "os"
+	"os"
 
 	"github.com/altrudev/MCP-DriftGuard/internal/canonical"
 )
@@ -138,7 +138,9 @@ func (c *Client) legacyRPC(ctx context.Context, endpoint, session string, payloa
 	req.Header.Set("Content-Type", "application/json")
 	req.Header.Set("Accept", "application/json, text/event-stream")
 	req.Header.Set("MCP-Protocol-Version", LegacyProtocolVersion)
-    if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" { req.Header.Set("Authorization", "Bearer "+token) }
+	if token := os.Getenv("MCPDRIFT_BEARER_TOKEN"); token != "" {
+		req.Header.Set("Authorization", "Bearer "+token)
+	}
 	if session != "" {
 		req.Header.Set("Mcp-Session-Id", session)
 	}
@@ -214,3 +216,5 @@ func (c *Client) paginateLegacy(ctx context.Context, endpoint, session string, i
 	}
 	return fmt.Errorf("%s exceeded pagination limit", method)
 }
+
+[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
