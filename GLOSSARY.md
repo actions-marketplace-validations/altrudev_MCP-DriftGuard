@@ -38,6 +38,9 @@ This document is the project's **authoritative terminology register**. Product n
 | SSE | Server-Sent Events | HTTP event-stream response framing for MCP transport |
 | Interoperability test | Cross-implementation compatibility test | Requires independent MCP server implementations and retained execution evidence |
 | Agent skill | Portable procedural instructions (Agent Skills) | SKILL.md guides agents; not a separate security engine |
+| Stdio transport | MCP JSON-RPC over standard input/output | Local executable subprocess transport; executable launch itself is privileged even when tool discovery is read-only |
+| Executable allowlist | Explicit application execution authorization | Operator-pinned executable path; not an OS sandbox or guarantee of binary content integrity |
+| Conformance harness | Reproducible compatibility / negative-security test suite | Verifies stated scenarios and expected exit codes; does not establish formal certification |
 | Agent adapter | Agent-specific integration layer | Minimal host-specific installation, tool invoking and packaging |
 | Local-model test | Model-assisted integration test | Model explanations are untrusted/advisory; CLI results remain authoritative |
 | Prompt injection | Instruction/data trust-boundary crossing | Malicious instructions embedded in discovered or retrieved MCP metadata |
