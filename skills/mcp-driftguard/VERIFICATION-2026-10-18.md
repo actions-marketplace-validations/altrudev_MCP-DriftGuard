@@ -40,3 +40,13 @@ This record is a scoped local executable verification, **not** independent inter
 - All test key materials and modified fixture files were kept in temporary paths outside the GitHub repository.
 
 Remaining gate: reproduce REVIEW exit 1 with an actual lower-risk difference; diagnose the version-change discrepancy and add a regression test if reproducible.
+
+## Verified regression repair — commit 693f6ee11412e249aa2419ed02cb9f2bc0c0a0ba
+
+Root cause of the unexpected version-change PASS: the observer retained `server.version`, but `internal/diff/diff.go` did not compare it. Added explicit LOW-severity `server.version` comparison and a regression unit test.
+
+On Prometheus at this commit, `go test ./...`, `go vet ./...`, and the CLI build all passed. A real loopback example server reporting version `1.0.1` was compared against the previously created baseline at version `1.0.0`; the executable returned `match:false`, `risk:LOW`, `score:5`, `server.version` change and **exit status 1 (REVIEW)**.
+
+Signed-baseline creation, matching public-key verification, and tampered signed-baseline rejection also passed on the prior revision.
+
+Remaining independently unverified gates: cross-implementation MCP interoperability; installed-agent behavior for Claude Code, Cursor and Codex; safe packaging on clean hosts; marketplace terms and human-approved publication.
