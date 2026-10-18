@@ -189,6 +189,14 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 			if e = json.Unmarshal(result, &contents); e != nil {
 				return snapshot, e
 			}
+			// Advertised categories must return a corresponding JSON array,
+			// even if empty. Missing/null inventory cannot prove a clean surface.
+			var fields map[string]json.RawMessage
+			if e = json.Unmarshal(result, &fields); e != nil { return snapshot, e }
+			field := fields[category]
+			if len(field) == 0 || field[0] != '[' {
+				return snapshot, fmt.Errorf("stdio %s/list omitted required %s array", category, category)
+			}
 			snapshot.Tools = append(snapshot.Tools, contents.Tools...)
 			snapshot.Resources = append(snapshot.Resources, contents.Resources...)
 			snapshot.Prompts = append(snapshot.Prompts, contents.Prompts...)
