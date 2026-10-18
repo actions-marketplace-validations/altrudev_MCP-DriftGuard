@@ -326,23 +326,29 @@ func TestBearerNeverFollowsCrossOriginRedirect(t *testing.T) {
 }
 
 func TestMetadataOversizeRejected(t *testing.T) {
- srv:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
-  w.Header().Set("Content-Type","application/json")
-  _,_ = w.Write([]byte(strings.Repeat("a",(1<<20)+1)))
- }))
- defer srv.Close()
- c:=New()
- _,_,err:=c.getJSON(context.Background(),srv.URL)
- if err==nil || !strings.Contains(err.Error(),"exceeds") {t.Fatalf("oversized metadata accepted: %v",err)}
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		_, _ = w.Write([]byte(strings.Repeat("a", (1<<20)+1)))
+	}))
+	defer srv.Close()
+	c := New()
+	_, _, err := c.getJSON(context.Background(), srv.URL)
+	if err == nil || !strings.Contains(err.Error(), "exceeds") {
+		t.Fatalf("oversized metadata accepted: %v", err)
+	}
 }
 
 func TestMetadataRedirectNotFollowed(t *testing.T) {
- var reached bool
- destination:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){reached=true;_,_=w.Write([]byte("{}"))}))
- defer destination.Close()
- source:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){http.Redirect(w,r,destination.URL,http.StatusTemporaryRedirect)}))
- defer source.Close()
- c:=New()
- _,status,err:=c.getJSON(context.Background(),source.URL)
- if err!=nil || status!=http.StatusTemporaryRedirect || reached {t.Fatalf("metadata redirected: status=%d reached=%v err=%v",status,reached,err)}
+	var reached bool
+	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { reached = true; _, _ = w.Write([]byte("{}")) }))
+	defer destination.Close()
+	source := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, destination.URL, http.StatusTemporaryRedirect)
+	}))
+	defer source.Close()
+	c := New()
+	_, status, err := c.getJSON(context.Background(), source.URL)
+	if err != nil || status != http.StatusTemporaryRedirect || reached {
+		t.Fatalf("metadata redirected: status=%d reached=%v err=%v", status, reached, err)
+	}
 }
