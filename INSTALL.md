@@ -68,3 +68,31 @@ The repository includes a Dockerfile and `action.yml`. Both are source integrati
 The CLI, source and skill in this repository are Apache-2.0 licensed, subject to the repository [LICENSE](LICENSE) and [NOTICE](NOTICE). Do not bundle credentials or private keys. Optional future commercial services must state their **own** terms and must not retroactively revoke rights granted to published Apache-2.0 code.
 
 See the [canonical glossary](GLOSSARY.md), [threat model](THREAT_MODEL.md) and [security policy](SECURITY.md).
+
+## Experimental local MCP stdio transport
+
+DriftGuard can inspect a local MCP server over stdin/stdout with the same snapshot and baseline verifier as HTTP. This transport is **pre-release**. It does not execute discovered MCP tools, but starting a local executable itself is a privileged action.
+
+**Only launch an executable you have inspected and approved.** The verifier requires an exact, absolute executable allowlist via `MCPDRIFT_STDIO_ALLOWED_EXEC`; it never passes commands to a shell. Process arguments must come from a trusted operator, never from an LLM or MCP server metadata. The subprocess receives a minimal environment (no inherited bearer token), and its discovery session has a deadline.
+
+For the disposable Python fixture (Linux/macOS example):
+
+```sh
+chmod u+x examples/stdio-fixture/server.py
+FIXTURE="$(pwd)/examples/stdio-fixture/server.py"
+export MCPDRIFT_STDIO_ALLOWED_EXEC="$FIXTURE"
+
+./mcpdrift inspect --stdio-exec "$FIXTURE" --format json stdio
+./mcpdrift baseline --stdio-exec "$FIXTURE" --output stdio.candidate.json stdio
+./mcpdrift verify --stdio-exec "$FIXTURE" --baseline stdio.candidate.json stdio
+```
+
+For trusted executable arguments supply `--stdio-args-json '["--safe-option"]'`. The endpoint argument must be exactly `stdio`; the full executable path and argument vector are committed into the snapshot's endpoint identity. This does not authenticate executable contents; pin a binary digest and review changes in the operator's deployment process.
+
+Reproducible local test, without external services:
+
+```sh
+python3 skills/mcp-driftguard/test_stdio_transport.py
+```
+
+**Remaining limitations:** no production-grade OS sandbox or child-process-tree isolation, resource controls are incomplete, Windows stdio execution has not been independently exercised, and the model cannot grant executable permissions. Do not use stdio mode on untrusted executables.
