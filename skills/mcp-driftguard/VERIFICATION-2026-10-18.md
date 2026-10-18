@@ -29,3 +29,14 @@ No secrets, production endpoints, or signing keys were used.
 - Marketplace submissions, terms, payout due diligence and truthful commercial packaging.
 
 This record is a scoped local executable verification, **not** independent interoperability certification, a security audit of all paths, or production acceptance. Never extrapolate fixture PASS to unaudited production endpoints.
+
+## Follow-up signed-baseline and REVIEW investigation
+
+- `keygen` generated a temporary Ed25519 keypair: exit 0.
+- A signed baseline was created against the isolated loopback fixture: exit 0.
+- Verification with the matching public key returned PASS, exit 0.
+- Modifying the signed artifact's server metadata without updating its canonical hash returned integrity rejection, exit 5.
+- A temporary demo server variant changed self-reported server version from `1.0.0` to `1.0.1`; the observed verification still returned PASS, exit 0. **This does not establish correct REVIEW behavior.** The discrepancy requires source investigation before declaring version-metadata drift detection functional. The changed process did start, but the comparison may not have reached or retained the altered field. Do not claim this gate passed.
+- All test key materials and modified fixture files were kept in temporary paths outside the GitHub repository.
+
+Remaining gate: reproduce REVIEW exit 1 with an actual lower-risk difference; diagnose the version-change discrepancy and add a regression test if reproducible.
