@@ -2,12 +2,15 @@ package main
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"flag"
 	"fmt"
 	"os"
 	"strings"
 
 	"github.com/altrudev/MCP-DriftGuard/internal/baseline"
+	"github.com/altrudev/MCP-DriftGuard/internal/canonical"
 	mdiff "github.com/altrudev/MCP-DriftGuard/internal/diff"
 	"github.com/altrudev/MCP-DriftGuard/internal/observe"
 	"github.com/altrudev/MCP-DriftGuard/internal/report"
@@ -46,10 +49,12 @@ func run(args []string) int {
 func inspect(args []string) int {
 	fs := flag.NewFlagSet("inspect", flag.ContinueOnError)
 	format := fs.String("format", "text", "text, json, or sarif")
+	stdioExecutable := fs.String("stdio-exec", "", "approved absolute MCP stdio server executable")
+	stdioArgs := fs.String("stdio-args-json", "[]", "trusted JSON array of stdio server arguments")
 	if parseOneEndpoint(fs, args) != nil || fs.NArg() != 1 {
 		return 3
 	}
-	s, err := observe.New().Inspect(context.Background(), fs.Arg(0))
+	s, err := inspectTarget(fs.Arg(0), *stdioExecutable, *stdioArgs)
 	if err != nil {
 		return failProbe(err)
 	}
@@ -63,10 +68,12 @@ func createBaseline(args []string) int {
 	fs := flag.NewFlagSet("baseline", flag.ContinueOnError)
 	out := fs.String("output", "mcpdrift.baseline.json", "baseline output path")
 	sign := fs.String("sign-key", "", "Ed25519 private key PEM")
+	stdioExecutable := fs.String("stdio-exec", "", "approved absolute MCP stdio server executable")
+	stdioArgs := fs.String("stdio-args-json", "[]", "trusted JSON array of stdio server arguments")
 	if parseOneEndpoint(fs, args) != nil || fs.NArg() != 1 {
 		return 3
 	}
-	s, err := observe.New().Inspect(context.Background(), fs.Arg(0))
+	s, err := inspectTarget(fs.Arg(0), *stdioExecutable, *stdioArgs)
 	if err != nil {
 		return failProbe(err)
 	}
@@ -89,6 +96,8 @@ func verify(args []string) int {
 	fs := flag.NewFlagSet("verify", flag.ContinueOnError)
 	base := fs.String("baseline", "mcpdrift.baseline.json", "baseline path")
 	pubPath := fs.String("verify-key", "", "Ed25519 public key PEM")
+	stdioExecutable := fs.String("stdio-exec", "", "approved absolute MCP stdio server executable")
+	stdioArgs := fs.String("stdio-args-json", "[]", "trusted JSON array of stdio server arguments")
 	format := fs.String("format", "text", "text, json, or sarif")
 	if parseOneEndpoint(fs, args) != nil || fs.NArg() != 1 {
 		return 3
@@ -104,7 +113,7 @@ func verify(args []string) int {
 	if err := a.Validate(pub); err != nil {
 		return fail(err, 5)
 	}
-	live, err := observe.New().Inspect(context.Background(), fs.Arg(0))
+	live, err := inspectTarget(fs.Arg(0), *stdioExecutable, *stdioArgs)
 	if err != nil {
 		return failProbe(err)
 	}
@@ -173,4 +182,15 @@ func failProbe(err error) int      { return fail(err, 3) }
 func fail(err error, code int) int { fmt.Fprintln(os.Stderr, "mcpdrift:", err); return code }
 func usage() {
 	fmt.Fprintln(os.Stderr, "Usage: mcpdrift <inspect|baseline|verify|diff|keygen|version> [options]")
+}
+
+func inspectTarget(endpoint, executable, argsJSON string) (canonical.Snapshot,error) {
+ if executable == "" {
+  if endpoint == "stdio" { return canonical.Snapshot{},errors.New("stdio endpoint requires --stdio-exec")}
+  return observe.New().Inspect(context.Background(),endpoint)
+ }
+ if endpoint != "stdio" {return canonical.Snapshot{},errors.New("stdio executable requires explicit stdio endpoint")}
+ var args []string
+ if err:=json.Unmarshal([]byte(argsJSON),&args);err!=nil {return canonical.Snapshot{},fmt.Errorf("stdio args must be JSON array: %w",err)}
+ return observe.InspectStdio(context.Background(),executable,args)
 }
