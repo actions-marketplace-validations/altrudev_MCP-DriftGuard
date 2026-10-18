@@ -222,7 +222,9 @@ func readRPCBody(r io.Reader, contentType string) ([]byte, error) {
 		for sc.Scan() {
 			line := sc.Text()
 			if strings.HasPrefix(line, "data:") {
-				return []byte(strings.TrimSpace(strings.TrimPrefix(line, "data:"))), nil
+				payload := strings.TrimSpace(strings.TrimPrefix(line, "data:"))
+				if payload == "" { continue } // Some servers emit an empty SSE data preface before the response event.
+				return []byte(payload), nil
 			}
 		}
 		if err := sc.Err(); err != nil {
