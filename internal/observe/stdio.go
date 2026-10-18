@@ -68,6 +68,7 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 	ctx, cancel := context.WithTimeout(parent, 20*time.Second)
 	defer cancel()
 	cmd := exec.CommandContext(ctx, target, args...)
+	configureStdioProcess(cmd)
 	cmd.Env = []string{"PATH=/usr/bin:/bin", "HOME=/nonexistent"}
 	cmd.Stderr = io.Discard
 	stdin, e := cmd.StdinPipe()
@@ -83,9 +84,7 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 	}
 	defer func() {
 		_ = stdin.Close()
-		if cmd.Process != nil {
-			_ = cmd.Process.Kill()
-		}
+		terminateStdioProcess(cmd)
 		_ = cmd.Wait()
 	}()
 	reader := bufio.NewScanner(stdout)
