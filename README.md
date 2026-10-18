@@ -18,7 +18,7 @@ It is intentionally standalone: **no LLM, no DDC dependency, no hosted account, 
 
 ## Status
 
-v0.1 release candidate. DriftGuard speaks the current MCP 2026-07-28 stateless protocol and falls back to legacy initialize/session-based servers through 2025-11-25. Basic discovery interoperability has been exercised against the TypeScript SDK, Python SDK and Everything reference server. Broad protocol conformance, production security acceptance and authenticated agent-host testing remain incomplete: **pre-release, not certified**.
+v0.1 release candidate. DriftGuard speaks the current MCP 2026-07-28 stateless protocol and falls back to legacy initialize/session-based servers through 2025-11-25. Basic discovery interoperability has been exercised against the TypeScript SDK, Python SDK and Everything reference server. Experimental allowlisted stdio discovery is implemented and exercised against the Everything reference server. Broad protocol conformance, production security acceptance and authenticated agent-host testing remain incomplete: **pre-release, not certified**.
 
 ## What it detects
 
@@ -65,7 +65,7 @@ PASS / REVIEW / FAIL
 
 ## Install from source
 
-For prerequisites, Windows guidance, trusted installation, candidate baseline approval and agent-skill setup see [INSTALL.md](INSTALL.md).
+For prerequisites, Windows guidance, trusted installation, candidate baseline approval, experimental local stdio transport and agent-skill setup see [INSTALL.md](INSTALL.md).
 
 
 Requires Go 1.23+.
@@ -198,6 +198,10 @@ PASS / REVIEW / FAIL
 DriftGuard observes the externally visible MCP surface. It does **not** claim that an unchanged external surface proves an unchanged binary, source tree, dependency graph, container image, or backend implementation.
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) and [SPEC.md](SPEC.md).
+
+## Reproducible security conformance
+
+From a clean source checkout, run `python3 scripts/conformance_suite.py --output conformance.json` (Go 1.23+, Python 3.10+). The versioned runner exercises unit/race/static/documentation checks and both isolated HTTP and stdio PASS/FAIL acceptance harnesses. Evidence includes the source revision and per-suite status. A passing local suite is not certification or independent reviewer acceptance.
 
 ## Development
 
