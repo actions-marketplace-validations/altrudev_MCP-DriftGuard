@@ -58,9 +58,9 @@ func (a Artifact) Validate(publicKey ed25519.PublicKey) error {
 		return errors.New("baseline canonical hash mismatch")
 	}
 	if len(publicKey) > 0 && a.Signature == nil {
-    return errors.New("verification key supplied but baseline is unsigned")
-    }
-    if a.Signature != nil {
+		return errors.New("verification key supplied but baseline is unsigned")
+	}
+	if a.Signature != nil {
 		if len(publicKey) == 0 {
 			return errors.New("baseline is signed but no verification key was supplied")
 		}
@@ -171,3 +171,5 @@ func keyID(pub ed25519.PublicKey) string {
 	sum := sha256.Sum256(pub)
 	return "sha256:" + hex.EncodeToString(sum[:8])
 }
+
+[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
