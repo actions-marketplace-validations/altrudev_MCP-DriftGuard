@@ -44,10 +44,14 @@ def main():
         results["unapproved_executable"]=r.returncode
         r=call([exe,"inspect","--stdio-exec",fixture,"--stdio-args-json","not-json","stdio"],env)
         results["bad_args"]=r.returncode
+        for mode in ("--malformed","--wrong-id","--repeated-cursor"):
+            r=call([exe,"inspect",*common,"--stdio-args-json",json.dumps([mode]),"stdio"],env)
+            results[mode]=r.returncode
         results["baseline_unchanged"]=baseline.read_bytes()==before
     expected={"inspect":0,"inventory":True,"baseline":0,"unchanged":0,"drift":2,
               "detected_added_tool":True,"unapproved_executable":3,"bad_args":3,
-              "baseline_unchanged":True}
+              "baseline_unchanged":True,
+              "--malformed":3,"--wrong-id":3,"--repeated-cursor":3}
     results["pass"]=all(results.get(k)==v for k,v in expected.items())
     print(json.dumps(results,indent=2,sort_keys=True))
     return 0 if results["pass"] else 1
