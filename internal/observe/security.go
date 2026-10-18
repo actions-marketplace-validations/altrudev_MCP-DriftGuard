@@ -7,8 +7,8 @@ import (
 	"crypto/tls"
 	"encoding/hex"
 	"encoding/json"
-	"fmt"
 	"errors"
+	"fmt"
 	"io"
 	"net"
 	"net/http"
@@ -132,8 +132,12 @@ func (c *Client) getJSON(ctx context.Context, target string) ([]byte, int, error
 	}
 	defer res.Body.Close()
 	b, err := io.ReadAll(io.LimitReader(res.Body, (1<<20)+1))
-	if err != nil { return nil, res.StatusCode, err }
-	if len(b) > 1<<20 { return nil, res.StatusCode, errors.New("authorization metadata exceeds 1 MiB limit") }
+	if err != nil {
+		return nil, res.StatusCode, err
+	}
+	if len(b) > 1<<20 {
+		return nil, res.StatusCode, errors.New("authorization metadata exceeds 1 MiB limit")
+	}
 	return b, res.StatusCode, nil
 }
 
