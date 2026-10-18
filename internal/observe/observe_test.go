@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
+	"strings"
 	"testing"
 )
 
@@ -241,5 +242,13 @@ func TestUninitializedServerAllowsLegacyHandshake(t *testing.T) {
     if !legacyFallbackBody(body) { t.Fatal("explicit initialization requirement should permit legacy handshake") }
     if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32000,"message":"Bad Request: Server not initialized because credentials missing"},"id":null}`) {
         t.Fatal("unrelated initialization-like message must not trigger fallback")
+    }
+}
+
+func TestEmptySSEPrefaceIsIgnored(t *testing.T) {
+    raw := "id: preface\\ndata: \\n\\nevent: message\\ndata: {\"jsonrpc\":\"2.0\",\"id\":1,\"result\":{}}\\n\\n"
+    got, err := readRPCBody(strings.NewReader(raw), "text/event-stream")
+    if err != nil || !json.Valid(got) {
+        t.Fatalf("SSE preface parsing: payload=%q err=%v", got, err)
     }
 }
