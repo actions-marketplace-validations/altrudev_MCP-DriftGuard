@@ -257,7 +257,17 @@ func comparePrompts(a, b []canonical.Prompt) []Change {
 	return out
 }
 
-func rawEqual(a, b json.RawMessage) bool { return bytes.Equal(bytes.TrimSpace(a), bytes.TrimSpace(b)) }
+func rawEqual(a, b json.RawMessage) bool {
+    a = bytes.TrimSpace(a)
+    b = bytes.TrimSpace(b)
+    if len(a) == 0 || len(b) == 0 { return len(a) == len(b) }
+    var av, bv any
+    da := json.NewDecoder(bytes.NewReader(a)); da.UseNumber()
+    db := json.NewDecoder(bytes.NewReader(b)); db.UseNumber()
+    if da.Decode(&av) != nil || db.Decode(&bv) != nil { return false }
+    ac, ae := json.Marshal(av); bc, be := json.Marshal(bv)
+    return ae == nil && be == nil && bytes.Equal(ac, bc)
+}
 
 func rawValue(a json.RawMessage) any {
 	if len(bytes.TrimSpace(a)) == 0 {
