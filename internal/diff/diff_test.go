@@ -39,8 +39,12 @@ func TestServerVersionDriftIsReview(t *testing.T) {
 }
 
 func TestSemanticallyIdenticalJSONIsNotDrift(t *testing.T) {
- a := canonical.Snapshot{Endpoint:"http://127.0.0.1/mcp",Tools:[]canonical.Tool{{Name:"x",InputSchema:json.RawMessage(`{"type":"object","properties":{"a":{"type":"string"},"b":{"type":"number"}}}`),Annotations:json.RawMessage(`{"readOnlyHint":true,"destructiveHint":false}`)}}}
- b := canonical.Snapshot{Endpoint:a.Endpoint,Tools:[]canonical.Tool{{Name:"x",InputSchema:json.RawMessage(`{ "properties": { "b": { "type": "number" }, "a": { "type":"string" } }, "type":"object" }`),Annotations:json.RawMessage(`{ "destructiveHint": false, "readOnlyHint": true }`)}}}
- r:=Compare(a,b)
- if !r.Match {t.Fatalf("format-only changes must not count as drift: %#v",r)}
+	a := canonical.Snapshot{Endpoint: "http://127.0.0.1/mcp", Tools: []canonical.Tool{{Name: "x", InputSchema: json.RawMessage(`{"type":"object","properties":{"a":{"type":"string"},"b":{"type":"number"}}}`), Annotations: json.RawMessage(`{"readOnlyHint":true,"destructiveHint":false}`)}}}
+	b := canonical.Snapshot{Endpoint: a.Endpoint, Tools: []canonical.Tool{{Name: "x", InputSchema: json.RawMessage(`{ "properties": { "b": { "type": "number" }, "a": { "type":"string" } }, "type":"object" }`), Annotations: json.RawMessage(`{ "destructiveHint": false, "readOnlyHint": true }`)}}}
+	r := Compare(a, b)
+	if !r.Match {
+		t.Fatalf("format-only changes must not count as drift: %#v", r)
+	}
 }
+
+[executed on device: vps-377a113a (b5f97e3f-b6d4-4a37-9614-85905ab97c68)]
