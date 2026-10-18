@@ -45,15 +45,21 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 	// Authorize the complete argv independently of model-provided CLI parameters.
 	allowedArgJSON := os.Getenv("MCPDRIFT_STDIO_ALLOWED_ARGS_JSON")
 	if allowedArgJSON == "" {
-		if len(args) != 0 { return snapshot, errors.New("stdio arguments require explicit MCPDRIFT_STDIO_ALLOWED_ARGS_JSON authorization") }
+		if len(args) != 0 {
+			return snapshot, errors.New("stdio arguments require explicit MCPDRIFT_STDIO_ALLOWED_ARGS_JSON authorization")
+		}
 	} else {
 		var allowedArgs []string
 		if e := json.Unmarshal([]byte(allowedArgJSON), &allowedArgs); e != nil {
 			return snapshot, fmt.Errorf("invalid approved stdio argv: %w", e)
 		}
-		if len(args) != len(allowedArgs) { return snapshot, errors.New("stdio arguments differ from approved argv") }
+		if len(args) != len(allowedArgs) {
+			return snapshot, errors.New("stdio arguments differ from approved argv")
+		}
 		for i := range args {
-			if args[i] != allowedArgs[i] { return snapshot, errors.New("stdio arguments differ from approved argv") }
+			if args[i] != allowedArgs[i] {
+				return snapshot, errors.New("stdio arguments differ from approved argv")
+			}
 		}
 	}
 	// The entire argument vector belongs to the trusted caller; never pass model-generated argv.
