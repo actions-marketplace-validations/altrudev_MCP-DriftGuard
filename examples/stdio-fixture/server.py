@@ -1,6 +1,6 @@
 #!/usr/bin/python3
 """Deterministic, disposable MCP stdio fixture. Not for production endpoints."""
-import json, sys, time
+import json, sys, time, subprocess
 from pathlib import Path
 
 def emit(id_, result=None, error=None):
@@ -16,6 +16,11 @@ for raw in sys.stdin:
     except ValueError:
         continue
     method=msg.get("method")
+    if "--hang-with-child" in sys.argv:
+        child=subprocess.Popen([sys.executable,"-c","import time;time.sleep(60)"])
+        Path(__file__).with_name("spawned.pid").write_text(str(child.pid))
+        time.sleep(60)
+        continue
     if "--hang" in sys.argv:
         time.sleep(60)
         continue
