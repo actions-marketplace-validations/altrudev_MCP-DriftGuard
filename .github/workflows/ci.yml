@@ -26,6 +26,9 @@ jobs:
       - name: Test
         run: go test ./...
 
+      - name: Isolated DriftGuard acceptance harness
+        run: python3 skills/mcp-driftguard/test_agent_skill.py
+
       - name: Race detector
         run: go test -race ./...
 
