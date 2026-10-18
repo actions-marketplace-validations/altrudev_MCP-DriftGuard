@@ -84,7 +84,9 @@ func normalizeJSON(raw json.RawMessage) (json.RawMessage, error) {
 	}
 	var trailing any
 	if err := dec.Decode(&trailing); err != io.EOF {
-		if err == nil { return nil, fmt.Errorf("unexpected trailing JSON value") }
+		if err == nil {
+			return nil, fmt.Errorf("unexpected trailing JSON value")
+		}
 		return nil, fmt.Errorf("unexpected trailing JSON data: %w", err)
 	}
 	b, err := json.Marshal(v)
