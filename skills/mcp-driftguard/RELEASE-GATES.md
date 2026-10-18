@@ -15,7 +15,7 @@
 
 ## Transport and independent conformance gates
 
-- [x] Run stdio discovery through an exact approved executable path, with no shell or inherited token; cover tool/resource/prompt inventory, 0/2/3 exit classifications, malformed JSON-RPC, ID mismatch and pagination cursor loops
+- [x] Run stdio discovery through an exact approved executable and complete argument vector, with no shell or inherited token; cover tool/resource/prompt inventory, 0/2/3 exit classifications, malformed JSON-RPC, ID mismatch and pagination cursor loops
 - [x] Compare MCP Everything reference-server stdio inventory with previous HTTP inventory for the same unprivileged client capability context
 - [x] Run versioned local conformance runner (Go unit/race/vet, docs, HTTP, stdio) on pinned source revision
 - [ ] Demonstrate native stdio executable isolation under an independent OS sandbox and process-tree containment
