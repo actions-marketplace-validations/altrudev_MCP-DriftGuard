@@ -26,3 +26,14 @@ func TestSchemaChangeIsHighRisk(t *testing.T) {
 		t.Fatalf("expected fail-level score: %#v", r)
 	}
 }
+
+func TestServerVersionDriftIsReview(t *testing.T) {
+	a := canonical.Snapshot{Endpoint: "https://example.test/mcp"}
+	a.Server.Version = "1.0.0"
+	b := a
+	b.Server.Version = "1.0.1"
+	r := Compare(a, b)
+	if r.Match || r.Score != 5 || r.Changes[0].Path != "server.version" || r.Changes[0].Severity != Low {
+		t.Fatalf("server version change should be low-risk REVIEW: %#v", r)
+	}
+}
