@@ -225,3 +225,13 @@ func TestGenericBadRequestMustNotDowngrade(t *testing.T) {
 		t.Fatal("unsubstantiated version error allowed downgrade")
 	}
 }
+
+func TestPythonSDKUnsupportedVersionFallbackSignature(t *testing.T) {
+	body := `{"jsonrpc":"2.0","id":"server-error","error":{"code":-32600,"message":"Bad Request: Unsupported protocol version: 2026-07-28. Supported versions: 2024-11-05, 2025-03-26, 2025-06-18, 2025-11-25"}}`
+	if !legacyFallbackBody(body) {
+		t.Fatal("explicit Python SDK protocol rejection must permit legacy negotiation")
+	}
+	if legacyFallbackBody(`{"jsonrpc":"2.0","error":{"code":-32600,"message":"Bad Request: Invalid request"}}`) {
+		t.Fatal("generic invalid request must not permit fallback")
+	}
+}
