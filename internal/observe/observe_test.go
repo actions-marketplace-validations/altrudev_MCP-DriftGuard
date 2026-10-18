@@ -303,20 +303,24 @@ func TestBearerTokenForwardedToMCPRPCOnly(t *testing.T) {
 }
 
 func TestBearerNeverFollowsCrossOriginRedirect(t *testing.T) {
- t.Setenv("MCPDRIFT_BEARER_TOKEN","synthetic-test-only")
- var redirected bool
- destination:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
-  redirected=true
-  if r.Header.Get("Authorization")!="" {t.Error("secret leaked to redirect destination")}
-  http.Error(w,"not authorized",http.StatusUnauthorized)
- }))
- defer destination.Close()
- src:=httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter,r *http.Request){
-  http.Redirect(w,r,destination.URL,http.StatusTemporaryRedirect)
- }))
- defer src.Close()
- if _,err:=New().Inspect(context.Background(),src.URL);err==nil {
-  t.Fatal("redirected request accepted")
- }
- if redirected {t.Fatal("MCP request followed redirect")}
+	t.Setenv("MCPDRIFT_BEARER_TOKEN", "synthetic-test-only")
+	var redirected bool
+	destination := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		redirected = true
+		if r.Header.Get("Authorization") != "" {
+			t.Error("secret leaked to redirect destination")
+		}
+		http.Error(w, "not authorized", http.StatusUnauthorized)
+	}))
+	defer destination.Close()
+	src := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, destination.URL, http.StatusTemporaryRedirect)
+	}))
+	defer src.Close()
+	if _, err := New().Inspect(context.Background(), src.URL); err == nil {
+		t.Fatal("redirected request accepted")
+	}
+	if redirected {
+		t.Fatal("MCP request followed redirect")
+	}
 }
