@@ -199,6 +199,16 @@ DriftGuard observes the externally visible MCP surface. It does **not** claim th
 
 See [THREAT_MODEL.md](THREAT_MODEL.md) and [SPEC.md](SPEC.md).
 
+## Extreme limits laboratory
+
+The bounded, offline `scripts/extreme_limits.py` suite generates a disposable MCP server with paginated inventories of 10, 100, 1,000, and 10,000 tools. It tests complete inventory discovery, clean signed-off baseline comparisons, deliberate unexpected-tool detection, malformed/missing discovery responses, and 20 concurrent read-only verifications across four workers. Every run uses an explicitly approved synthetic stdio fixture. It requires no network, LLM, paid service or production credentials.
+
+```sh
+python3 scripts/extreme_limits.py --output extreme-evidence.json
+```
+
+This suite is included in `scripts/conformance_suite.py` and CI. Measurements are local test observations, not production throughput guarantees; no extreme CPU/disk/ram sabotage or unrestricted code execution is performed.
+
 ## Reproducible security conformance
 
 From a clean source checkout, run `python3 scripts/conformance_suite.py --output conformance.json` (Go 1.23+, Python 3.10+). The versioned runner exercises unit/race/static/documentation checks and both isolated HTTP and stdio PASS/FAIL acceptance harnesses. Evidence includes the source revision and per-suite status. A passing local suite is not certification or independent reviewer acceptance.
