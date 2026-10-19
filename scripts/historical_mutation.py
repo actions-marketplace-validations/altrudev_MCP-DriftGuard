@@ -21,8 +21,8 @@ CASES=[
   'if false && len(publicKey) > 0 && a.Signature == nil {',
   "./internal/baseline","TestVerificationKeyRejectsUnsignedBaseline"),
  ("B5_ANNOTATION_ESCALATION","internal/diff/diff.go",
-  "func annotationAuthorityExpanded(before, after json.RawMessage) bool {",
-  "func annotationAuthorityExpanded(before, after json.RawMessage) bool { return false; /*",
+  "if annotationAuthorityExpanded(x.Annotations, y.Annotations) {",
+  "if false && annotationAuthorityExpanded(x.Annotations, y.Annotations) {",
   "./internal/diff","TestFederationB5AnnotationAuthorityExpansion"),
  ("B7_BEARER_POST","internal/observe/modern.go",
   'req.Header.Set("Authorization", "Bearer "+token)',
@@ -53,11 +53,7 @@ def main():
             if count!=1:
                 output["cases"].append({"case":name,"passed":False,"reason":"mutation anchor count "+str(count)})
                 continue
-            if name=="B5_ANNOTATION_ESCALATION":
-                original=original.replace(needle,replacement,1).replace("\\nfunc sensitiveDescriptionDelta", "*/ }\\nfunc sensitiveDescriptionDelta",1)
-                source.write_text(original)
-            else:
-                source.write_text(original.replace(needle,replacement,1))
+            source.write_text(original.replace(needle,replacement,1))
             completed=subprocess.run(["go","test",pkg,"-run","^"+test+"$","-count=1"],
                                      cwd=target,capture_output=True,text=True,timeout=90)
             detectable=(completed.returncode != 0 and "--- FAIL: "+test in completed.stdout)
