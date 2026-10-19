@@ -41,8 +41,8 @@ CASES=[
   'req.Header.Set("X-Disabled-Authorization", "Bearer "+token)',
   "./internal/observe","TestBearerTokenForwardedToMCPRPCOnly"),
  ("B4B_PARAPHRASE","internal/diff/diff.go",
-  "if strings.Contains(s, w) {",
-  "if false && strings.Contains(s, w) {",
+  'out = append(out, Change{Medium, "description",',
+  'out = append(out, Change{Low, "description",',
   "./internal/diff","TestFederationB4bParaphrasedAuthorityInstruction"),
 ]
 def main():
