@@ -5,7 +5,6 @@ import hashlib
 import json
 import os
 import platform
-import resource
 import shutil
 import subprocess
 import sys
@@ -32,10 +31,11 @@ def invoke(argv, environment=None, timeout=35):
 def invoke_mcp(exe, fixture, size, mode, operation, baseline=None):
     args = [str(size), mode]
     env = os.environ.copy()
-    env["MCPDRIFT_STDIO_ALLOWED_EXEC"] = str(fixture)
-    env["MCPDRIFT_STDIO_ALLOWED_ARGS_JSON"] = json.dumps(args)
-    argv = [exe, operation, "--stdio-exec", fixture,
-            "--stdio-args-json", json.dumps(args)]
+    approved_args = [str(fixture), *args]
+    env["MCPDRIFT_STDIO_ALLOWED_EXEC"] = sys.executable
+    env["MCPDRIFT_STDIO_ALLOWED_ARGS_JSON"] = json.dumps(approved_args)
+    argv = [exe, operation, "--stdio-exec", sys.executable,
+            "--stdio-args-json", json.dumps(approved_args)]
     if operation == "inspect":
         argv += ["--format", "json"]
     if operation == "baseline":
@@ -69,7 +69,6 @@ def main():
         fixture.chmod(0o700)
         for size in sizes:
             baseline = home / ("approved-%s.json" % size)
-            start_resources = resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss
             inspect = invoke_mcp(exe, fixture, size, "normal", "inspect")
             discovered = None
             if inspect["exit"] == 0:
@@ -89,7 +88,6 @@ def main():
                     "baseline_unchanged": before is not None and baseline.read_bytes() == before,
                     "seconds": {"inspect": inspect["seconds"], "baseline": save["seconds"],
                                 "unchanged": unchanged["seconds"], "drift": drift["seconds"]},
-                    "max_child_rss_kb_observed": resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss,
                     "stdout_digest": inspect.get("stdout_sha256")}
             case["passed"] = (discovered == size and inspect["exit"] == 0 and save["exit"] == 0
                               and unchanged["exit"] == 0 and drift["exit"] == 2
