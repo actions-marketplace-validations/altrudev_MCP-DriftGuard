@@ -20,8 +20,14 @@ jobs:
       - name: Check formatting
         run: test -z "$(gofmt -l .)"
 
+      - name: Evidence gate mutation tests
+        run: python3 scripts/test_release_integrity.py
+
       - name: Versioned conformance suite
         run: python3 scripts/conformance_suite.py --output "${{ runner.temp }}/mcpdrift-conformance.json"
+
+      - name: Verify revision-bound local evidence
+        run: python3 scripts/release_integrity.py --evidence "${{ runner.temp }}/mcpdrift-conformance.json" --commit "${{ github.sha }}"
 
       - name: Build CLI
         run: go build ./cmd/mcpdrift
