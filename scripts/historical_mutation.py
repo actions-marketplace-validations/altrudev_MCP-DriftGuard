@@ -25,8 +25,8 @@ CASES=[
   "if false && annotationAuthorityExpanded(x.Annotations, y.Annotations) {",
   "./internal/diff","TestFederationB5AnnotationAuthorityExpansion"),
  ("B3_SCHEMA_WIDENING","internal/diff/diff.go",
-  'if _, exists := oldProps[name]; !exists {',
-  'if false && !exists {',
+  "if !widen {",
+  "if false && !widen {",
   "./internal/diff","TestFederationB3OptionalPropertyWidening"),
  ("OAUTH_ISSUER_APPROVAL","internal/observe/security.go",
   'if !sameOrigin(endpoint, asu) && !approvedAuthorizationIssuer(asu) {',
@@ -35,7 +35,7 @@ CASES=[
  ("STDIO_GROUP_KILL","internal/observe/process_linux.go",
   '_ = syscall.Kill(-cmd.Process.Pid, syscall.SIGKILL)',
   '_ = syscall.Kill(-cmd.Process.Pid, syscall.Signal(0))',
-  "./internal/observe","TestStdioChildHoldingPipeIsTerminated"),
+  "python_stdio","linux_descendant_killed"),
  ("B7_BEARER_POST","internal/observe/modern.go",
   'req.Header.Set("Authorization", "Bearer "+token)',
   'req.Header.Set("X-Disabled-Authorization", "Bearer "+token)',
@@ -66,9 +66,14 @@ def main():
                 output["cases"].append({"case":name,"passed":False,"reason":"mutation anchor count "+str(count)})
                 continue
             source.write_text(original.replace(needle,replacement,1))
-            completed=subprocess.run(["go","test",pkg,"-run","^"+test+"$","-count=1"],
-                                     cwd=target,capture_output=True,text=True,timeout=90)
-            detectable=(completed.returncode != 0 and "--- FAIL: "+test in completed.stdout)
+            if pkg=="python_stdio":
+                completed=subprocess.run(["python3","skills/mcp-driftguard/test_stdio_transport.py"],
+                                         cwd=target,capture_output=True,text=True,timeout=95)
+                detectable=completed.returncode != 0 and "linux_descendant_killed" in (completed.stdout+completed.stderr)
+            else:
+                completed=subprocess.run(["go","test",pkg,"-run","^"+test+"$","-count=1"],
+                                         cwd=target,capture_output=True,text=True,timeout=90)
+                detectable=completed.returncode != 0 and "--- FAIL: "+test in completed.stdout
             output["cases"].append({"case":name,"passed":detectable,
                                     "test_exit":completed.returncode,
                                     "failure_excerpt":(completed.stdout+completed.stderr)[-450:]})
