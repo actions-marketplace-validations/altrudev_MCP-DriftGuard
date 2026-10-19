@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Offline, bounded extreme-limit verification. No real MCP endpoints or paid services."""
 import argparse
+from concurrent.futures import ThreadPoolExecutor
 import hashlib
 import json
 import os
@@ -56,7 +57,7 @@ def main():
     evidence = {"format": "mcpdrift-extreme-limits/v1", "commit": commit,
                 "platform": platform.system(), "arch": platform.machine(),
                 "limits": {"max_tools": 10000, "page_size": 100, "per_command_timeout_seconds": 35,
-                           "max_parallel_cases": 1},
+                           "max_parallel_cases": 4},
                 "tests": [], "passed": False}
     with tempfile.TemporaryDirectory(prefix="mcpdrift-extreme-") as directory:
         home = Path(directory)
@@ -94,6 +95,28 @@ def main():
                               and case["baseline_unchanged"])
             evidence["tests"].append(case)
             print("scale", size, "PASS" if case["passed"] else "FAIL", flush=True)
+        # Parallel read-only verifications of an independently approved baseline.
+        concurrency_size = 100
+        concurrency_baseline = home / "concurrency-approved.json"
+        prepared = invoke_mcp(exe, fixture, concurrency_size, "normal", "baseline",
+                              concurrency_baseline)
+        baseline_before = concurrency_baseline.read_bytes() if concurrency_baseline.exists() else b""
+        if prepared["exit"] == 0:
+            with ThreadPoolExecutor(max_workers=4) as pool:
+                outcomes = list(pool.map(
+                    lambda _: invoke_mcp(exe, fixture, concurrency_size, "normal",
+                                         "verify", concurrency_baseline)["exit"],
+                    range(20)))
+        else:
+            outcomes = [prepared["exit"]]
+        concurrency = {"kind": "concurrent_verification", "jobs": 20, "workers": 4,
+                       "exit_codes": sorted(set(outcomes)),
+                       "baseline_unchanged": concurrency_baseline.exists() and
+                           concurrency_baseline.read_bytes() == baseline_before}
+        concurrency["passed"] = (len(outcomes) == 20 and all(x == 0 for x in outcomes)
+                                  and concurrency["baseline_unchanged"])
+        evidence["tests"].append(concurrency)
+        print("concurrent", "PASS" if concurrency["passed"] else "FAIL", flush=True)
         for mode in ("missing", "cursor-loop", "wrong-id", "malformed"):
             result = invoke_mcp(exe, fixture, 10, mode, "inspect")
             case = {"kind": "malformed_discovery", "mode": mode,
