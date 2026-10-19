@@ -11,6 +11,7 @@ SUITES=[
  ("docs", [sys.executable,"scripts/check_docs.py"]),
  ("http_acceptance",[sys.executable,"skills/mcp-driftguard/test_agent_skill.py"]),
  ("stdio_acceptance",[sys.executable,"skills/mcp-driftguard/test_stdio_transport.py"]),
+ ("extreme_limits",[sys.executable,"scripts/extreme_limits.py","--sizes","10,100,1000,10000"]),
 ]
 def run(cmd):
     try:
