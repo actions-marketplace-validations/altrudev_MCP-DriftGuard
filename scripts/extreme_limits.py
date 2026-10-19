@@ -57,7 +57,7 @@ def main():
     evidence = {"format": "mcpdrift-extreme-limits/v1", "commit": commit,
                 "platform": platform.system(), "arch": platform.machine(),
                 "limits": {"max_tools": 10000, "page_size": 100, "per_command_timeout_seconds": 35,
-                           "max_parallel_cases": 4},
+                           "max_parallel_cases": 8},
                 "tests": [], "passed": False}
     with tempfile.TemporaryDirectory(prefix="mcpdrift-extreme-") as directory:
         home = Path(directory)
@@ -102,18 +102,18 @@ def main():
                               concurrency_baseline)
         baseline_before = concurrency_baseline.read_bytes() if concurrency_baseline.exists() else b""
         if prepared["exit"] == 0:
-            with ThreadPoolExecutor(max_workers=4) as pool:
+            with ThreadPoolExecutor(max_workers=8) as pool:
                 outcomes = list(pool.map(
                     lambda _: invoke_mcp(exe, fixture, concurrency_size, "normal",
                                          "verify", concurrency_baseline)["exit"],
-                    range(20)))
+                    range(100)))
         else:
             outcomes = [prepared["exit"]]
-        concurrency = {"kind": "concurrent_verification", "jobs": 20, "workers": 4,
+        concurrency = {"kind": "concurrent_verification", "jobs": 100, "workers": 8,
                        "exit_codes": sorted(set(outcomes)),
                        "baseline_unchanged": concurrency_baseline.exists() and
                            concurrency_baseline.read_bytes() == baseline_before}
-        concurrency["passed"] = (len(outcomes) == 20 and all(x == 0 for x in outcomes)
+        concurrency["passed"] = (len(outcomes) == 100 and all(x == 0 for x in outcomes)
                                   and concurrency["baseline_unchanged"])
         evidence["tests"].append(concurrency)
         print("concurrent", "PASS" if concurrency["passed"] else "FAIL", flush=True)
