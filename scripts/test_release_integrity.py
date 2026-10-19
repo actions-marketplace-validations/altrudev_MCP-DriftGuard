@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 """Mutation probes proving that missing/false/stale evidence cannot be accepted."""
-import copy
+import sys
+sys.dont_write_bytecode = True
 import unittest
 from release_integrity import assess, REQUIRED
 
