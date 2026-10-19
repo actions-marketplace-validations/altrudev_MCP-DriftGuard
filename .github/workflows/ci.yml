@@ -23,6 +23,9 @@ jobs:
       - name: Evidence gate mutation tests
         run: python3 scripts/test_release_integrity.py
 
+      - name: Historical vulnerability mutation checks
+        run: python3 scripts/historical_mutation.py
+
       - name: Versioned conformance suite
         run: python3 scripts/conformance_suite.py --output "${{ runner.temp }}/mcpdrift-conformance.json"
 
