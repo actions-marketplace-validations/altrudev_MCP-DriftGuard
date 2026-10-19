@@ -20,8 +20,13 @@ def assess(evidence, expected):
         return failures+["missing suite evidence"]
     for name in REQUIRED:
         result=suites.get(name)
-        if not isinstance(result,dict) or result.get("exit") != 0:
+        if (not isinstance(result,dict) or type(result.get("exit")) is not int
+                or result["exit"] != 0):
             failures.append("required suite absent or failed: "+name)
+        elif not all(isinstance(result.get(key),str) and len(result[key]) == 64
+                     and all(ch in "0123456789abcdef" for ch in result[key])
+                     for key in ("stdout_sha256","stderr_sha256")):
+            failures.append("missing or malformed output digest: "+name)
     return failures
 
 def main():
