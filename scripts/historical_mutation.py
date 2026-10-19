@@ -13,16 +13,16 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 CASES=[
  ("B0_B2_JSON_CANONICAL","internal/diff/diff.go",
-  "if !rawEqual(at.InputSchema, bt.InputSchema) {",
-  "if !bytes.Equal(at.InputSchema, bt.InputSchema) {",
+  "return ae == nil && be == nil && bytes.Equal(ac, bc)",
+  "return ae == nil && be == nil && bytes.Equal(a, b)",
   "./internal/diff","TestSemanticallyIdenticalJSONIsNotDrift"),
  ("B6_SIGNED_DOWNGRADE","internal/baseline/baseline.go",
   'if len(publicKey) > 0 && a.Signature == nil {',
   'if false && len(publicKey) > 0 && a.Signature == nil {',
   "./internal/baseline","TestVerificationKeyRejectsUnsignedBaseline"),
  ("B4B_PARAPHRASE","internal/diff/diff.go",
-  '"before any other tool", ',
-  '"not-present-in-input", ',
+  "if strings.Contains(s, w) {",
+  "if false && strings.Contains(s, w) {",
   "./internal/diff","TestFederationB4bParaphrasedAuthorityInstruction"),
 ]
 def main():
@@ -48,7 +48,8 @@ def main():
             source.write_text(original.replace(needle,replacement,1))
             completed=subprocess.run(["go","test",pkg,"-run","^"+test+"$","-count=1"],
                                      cwd=target,capture_output=True,text=True,timeout=90)
-            output["cases"].append({"case":name,"passed":completed.returncode!=0,
+            detectable=(completed.returncode != 0 and "--- FAIL: "+test in completed.stdout)
+            output["cases"].append({"case":name,"passed":detectable,
                                     "test_exit":completed.returncode,
                                     "failure_excerpt":(completed.stdout+completed.stderr)[-450:]})
         print(name,"DETECTED" if output["cases"][-1]["passed"] else "NOT DETECTED",flush=True)
