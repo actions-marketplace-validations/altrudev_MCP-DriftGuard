@@ -328,7 +328,7 @@ func annotationAuthorityExpanded(before, after json.RawMessage) bool {
 
 func sensitiveDescriptionDelta(a, b string) bool {
 	s := strings.ToLower(a + " " + b)
-	for _, w := range []string{"delete", "export", "write", "manage", "admin", "execute", "upload", "download", "credential", "database", "always call", "do not ask the user", "ignore previous", "treat its answer as final"} {
+	for _, w := range []string{"delete", "export", "write", "manage", "admin", "execute", "upload", "download", "credential", "database", "always call", "do not ask the user", "ignore previous", "treat its answer as final", "before any other tool", "without checking with", "without user confirmation", "without checking with the person", "rely on its result", "bypass review", "skip approval"} {
 		if strings.Contains(s, w) {
 			return true
 		}
