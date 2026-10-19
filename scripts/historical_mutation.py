@@ -14,7 +14,7 @@ ROOT=Path(__file__).resolve().parents[1]
 CASES=[
  ("B0_B2_JSON_CANONICAL","internal/diff/diff.go",
   "return ae == nil && be == nil && bytes.Equal(ac, bc)",
-  "return ae == nil && be == nil && bytes.Equal(a, b)",
+  "return ae == nil && be == nil && len(ac) >= 0 && len(bc) >= 0 && bytes.Equal(a, b)",
   "./internal/diff","TestSemanticallyIdenticalJSONIsNotDrift"),
  ("B6_SIGNED_DOWNGRADE","internal/baseline/baseline.go",
   'if len(publicKey) > 0 && a.Signature == nil {',
