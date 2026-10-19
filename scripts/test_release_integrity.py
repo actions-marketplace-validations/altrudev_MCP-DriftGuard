@@ -7,7 +7,7 @@ from release_integrity import assess, REQUIRED
 
 REV="a"*40
 def good():
-    return {"commit":REV,"passed":True,"suites":{n:{"exit":0} for n in REQUIRED}}
+    return {"commit":REV,"passed":True,"suites":{n:{"exit":0,"stdout_sha256":"a"*64,"stderr_sha256":"b"*64} for n in REQUIRED}}
 
 class IntegrityMutations(unittest.TestCase):
     def test_good_local_evidence(self):
@@ -27,6 +27,15 @@ class IntegrityMutations(unittest.TestCase):
             with self.subTest(suite=name):
                 e=good();e["suites"][name]["exit"]=1
                 self.assertTrue(assess(e,REV))
+    def test_boolean_exit_rejected(self):
+        e=good();e["suites"]["go_unit"]["exit"]=False
+        self.assertTrue(assess(e,REV))
+    def test_absent_output_digest_rejected(self):
+        e=good();del e["suites"]["go_unit"]["stdout_sha256"]
+        self.assertTrue(assess(e,REV))
+    def test_malformed_output_digest_rejected(self):
+        e=good();e["suites"]["go_unit"]["stderr_sha256"]="invalid"
+        self.assertTrue(assess(e,REV))
     def test_missing_suites(self):
         e=good();del e["suites"]
         self.assertTrue(assess(e,REV))
