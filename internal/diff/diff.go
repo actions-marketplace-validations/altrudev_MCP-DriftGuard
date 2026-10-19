@@ -101,11 +101,9 @@ func compareTools(a, b []canonical.Tool) []Change {
 			continue
 		}
 		if x.Description != y.Description {
-			sev := Low
-			if sensitiveDescriptionDelta(x.Description, y.Description) {
-				sev = Medium
-			}
-			out = append(out, Change{sev, "description", "tools." + n + ".description", "changed", x.Description, y.Description, "tool description changed"})
+			// Untrusted tool descriptions can influence agents even without known keywords.
+			// Require human review for every changed description.
+			out = append(out, Change{Medium, "description", "tools." + n + ".description", "changed", x.Description, y.Description, "tool description changed; review required"})
 		}
 		if !rawEqual(x.InputSchema, y.InputSchema) {
 			kind, sev, msg := classifySchemaChange(x.InputSchema, y.InputSchema)
