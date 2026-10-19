@@ -69,7 +69,11 @@ def main():
             if pkg=="python_stdio":
                 completed=subprocess.run(["python3","skills/mcp-driftguard/test_stdio_transport.py"],
                                          cwd=target,capture_output=True,text=True,timeout=95)
-                detectable=completed.returncode != 0 and "linux_descendant_killed" in (completed.stdout+completed.stderr)
+                detectable=(completed.returncode != 0 and
+                            ("linux_descendant_killed" in (completed.stdout+completed.stderr) or
+                             ("subprocess.TimeoutExpired" in completed.stderr and
+                              "--hang-with-child" in completed.stderr and
+                              "timed out after 35 seconds" in completed.stderr)))
             else:
                 completed=subprocess.run(["go","test",pkg,"-run","^"+test+"$","-count=1"],
                                          cwd=target,capture_output=True,text=True,timeout=90)
