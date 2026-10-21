@@ -22,6 +22,25 @@ const stdioMaxLine = 4 << 20
 
 // InspectStdio launches one explicitly approved local executable, without a shell.
 // Stdout is reserved for MCP JSON-RPC framing. The process is always terminated.
+func decodeStdioTools(result json.RawMessage) ([]canonical.Tool, error) {
+	var response struct {
+		Tools []struct {
+			Name        string          `json:"name"`
+			Description string          `json:"description"`
+			InputSchema json.RawMessage `json:"inputSchema"`
+			Annotations json.RawMessage `json:"annotations"`
+		} `json:"tools"`
+	}
+	if err := json.Unmarshal(result, &response); err != nil {
+		return nil, err
+	}
+	out := make([]canonical.Tool, 0, len(response.Tools))
+	for _, tool := range response.Tools {
+		out = append(out, canonical.Tool{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema, Annotations: tool.Annotations})
+	}
+	return out, nil
+}
+
 func InspectStdio(parent context.Context, binary string, args []string) (snapshot canonical.Snapshot, err error) {
 	allowed := os.Getenv("MCPDRIFT_STDIO_ALLOWED_EXEC")
 	if allowed == "" {
@@ -189,7 +208,7 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 				return snapshot, e
 			}
 			var contents struct {
-				Tools      []canonical.Tool     `json:"tools"`
+				Tools      []json.RawMessage    `json:"tools"`
 				Resources  []canonical.Resource `json:"resources"`
 				Prompts    []canonical.Prompt   `json:"prompts"`
 				NextCursor string               `json:"nextCursor"`
@@ -207,7 +226,13 @@ func InspectStdio(parent context.Context, binary string, args []string) (snapsho
 			if len(field) == 0 || field[0] != '[' {
 				return snapshot, fmt.Errorf("stdio %s/list omitted required %s array", category, category)
 			}
-			snapshot.Tools = append(snapshot.Tools, contents.Tools...)
+			if category == "tools" {
+				tools, decodeErr := decodeStdioTools(result)
+				if decodeErr != nil {
+					return snapshot, decodeErr
+				}
+				snapshot.Tools = append(snapshot.Tools, tools...)
+			}
 			snapshot.Resources = append(snapshot.Resources, contents.Resources...)
 			snapshot.Prompts = append(snapshot.Prompts, contents.Prompts...)
 			if contents.NextCursor == "" {
