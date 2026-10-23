@@ -1,0 +1,41 @@
+# Experimental operator verification policy
+
+This Python operator wrapper is experimental and loopback-only. The original Go CLI is unchanged. Codex reads the resulting evidence; independent administrators provision approvals and keys. The wrapper requires `cryptography` and never installs dependencies.
+
+## Fixed administrator custody
+
+Approval verification uses only `/etc/mcpdrift/trust/operator-approval-ed25519.pub.pem`. Evidence signing uses only `/etc/mcpdrift/trust/operator-evidence-ed25519.pem`; there is no caller-selected private-key argument or environment override. Both must be regular, root-owned files with no group/world write permission. The private key must additionally have no group/world permissions (typically mode 0600). Every ancestor must be a root-owned directory without group/world write permissions. Symlinks anywhere in these paths are rejected. Missing or unsafe paths fail closed before verifier execution.
+
+Administrators must independently distribute the evidence public key. A report and its detached `<output>.sig.json` alone do not establish trust. These checks require administrator provisioning; they do not establish hardware-backed custody or prevent privileged key theft. Never put real signing keys in the repository or agent-accessible workspaces. Tests generate disposable keys and substitute fixture paths in-process; they never read production keys or modify `/etc`.
+
+## Verifier privilege boundary
+
+The wrapper is a privileged operator-side broker. It refuses to proceed unless running on Linux with both real and effective UID 0, a protected executable `/usr/bin/setpriv`, and an independently provisioned `mcpdrift-verifier` account with nonzero UID and primary GID. There is no caller-selected identity, launcher, or fallback to direct execution. Administrators must reserve this account exclusively for verification, with no login, unrelated services, privileged group membership, or access to signing keys or the ledger. The wrapper does not provision accounts or change key/ledger permissions.
+
+Only the fixed root-custodied launcher starts privileged. It must apply the dedicated UID/GID, clear supplementary groups, clear bounding/inheritable/ambient capabilities, and set `no_new_privs` before executing the verifier. Failure to apply a restriction prevents exec. `no_new_privs` prevents set-ID programs and file capabilities from restoring privileges. The subprocess receives a minimal environment, `/` as working directory, null stdin, and no inherited nonstandard file descriptors. The parent retains root custody and signs only after the subprocess returns; it never loads the signing private key into the verifier process. Unreadable artifacts cause verification failure; administrators must arrange read/execute access without exposing the keys or ledger.
+
+Boundary preflight failures deny execution before consuming authorization. Launcher failures after consumption burn the authorization and never retry with root execution. Missing launchers or exec errors may abort without evidence; a launcher nonzero exit can yield an inconclusive/error report.
+
+## Signed one-time authorization
+
+`--policy` and `--policy-signature` supply a canonical-JSON Ed25519 signed policy with exactly these fields:
+
+- `schema`: `mcpdrift-operator-policy/v2` (legacy v1 policies are rejected).
+- `endpoint`: the exact approved `http://127.0.0.1` URL, without credentials or fragments.
+- `binary_sha256` and `baseline_sha256`: approved artifact digests.
+- `authorization_id`: a fresh administrator-generated random 128-bit identifier encoded as 32 lowercase hexadecimal characters.
+- `issued_at` and `expires_at`: integer Unix seconds, with `issued_at <= now < expires_at` and a positive lifetime of at most 300 seconds. Booleans are rejected.
+
+All fields are signed together. The evidence records the authorization ID, expiry, and SHA-256 of the canonical verified policy snapshot. Changing the ID, endpoint, timestamps, or artifact digests invalidates the signature. The administrator must issue a new ID for each authorized attempt.
+
+The fixed ledger directory `/var/lib/mcpdrift/consumed-authorizations` must already exist, be root-owned with no group/world permissions (typically 0700), and have the same protected, symlink-free ancestry. The wrapper does not create it. After signature, key, endpoint, artifact, and output checks, the wrapper rechecks expiry and atomically creates a marker named by authorization ID using exclusive creation relative to an opened directory descriptor. It records the policy digest, flushes the marker and directory with `fsync`, and only then starts the verifier. Any ledger error denies execution. Concurrent processes sharing this local ledger admit at most one attempt per ID; re-signing or changing a policy with the same ID does not reset consumption. Existing markers, including symlinks, deny execution.
+
+Consumption is permanent for that ledger: verifier failures, timeouts, signing/output errors, and crashes after marker creation burn the approval. Administrators must not delete markers or reuse IDs. Fresh approvals are needed for retries. Expiry limits when execution can start, not when it must finish. Expiry is checked immediately before consumption, not throughout execution.
+
+## Limits
+
+This is **local replay resistance**, not distributed replay protection. Separate hosts or ledger directories can each accept the same approval. Ledger deletion, rollback, restoration from an older backup, filesystem durability failures, or privileged tampering can restore replay opportunities. Do not prune markers without an independently justified retention and clock policy. Clock rollback can make an unused expired approval appear current; there is no trusted clock or external monotonic service. Ledger growth and burned approvals can cause denial of service.
+
+Root and the administrator-controlled filesystem are trusted. Path ownership/mode checks are not safe descriptor pinning of keys, artifacts, or every ancestor against concurrent privileged replacement. The verifier binary and baseline can still be swapped between digest checks and use; the verifier has its dedicated account privileges but is not otherwise sandboxed, and can access that account’s files and network. Capture uses nonblocking reads with a combined 1 MiB raw stdout/stderr limit and a 25-second monotonic deadline. Overflow, timeout, or invalid UTF-8/JSON produces inconclusive evidence. The wrapper starts a new session, sends SIGKILL to its process group on every capture exit (including success), closes its pipes without draining, and waits at most one additional second for the direct child. A child that cannot be reaped within that interval fails closed; it may remain alive in uninterruptible kernel sleep. Descendants that escape the process group with a new session/group are outside this cleanup mechanism; operator-managed cgroup containment is needed to cover them. CPU, process count, and other resource limits remain unimplemented. The deadline bounds capture and child waits, not process creation, filesystem I/O, signing, or total wrapper runtime. Output and detached signature publication is not a single atomic transaction, so incomplete pairs must be rejected by consumers. Local users must not receive generic privileged access to this wrapper: signed artifact selection is not process confinement. These controls do not establish production authorization lifecycle, a separate signing service, or a production security broker. The root parent still parses untrusted verifier JSON; parser isolation remains unimplemented. The privilege boundary requires deployment validation on the target Linux host. No production or third-party endpoint use is authorized by this experiment.
+
+Tests use disposable keys and current-user verifier fixtures. Linux negative tests invoke setpriv with invalid numeric UID/GID arguments and assert the verifier never executes; custody and root preflight tests use mocks. These are not actual root or UID-separated integration. An operator must separately validate real dedicated-account execution, key/ledger denial, capability/group removal, and descendant containment on the target host.

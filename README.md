@@ -1,6 +1,8 @@
+> Android v0.5.0 online approval prototype: [setup](docs/GUARDIAN-ONLINE.md), [test results and APK](ONLINE_STATUS.md). Explicit HTTPS pairing and foreground polling; no automatic execution or production readiness claim.
+
 # MCP DriftGuard
 
-**Continuous integrity verification for Model Context Protocol (MCP) servers.**
+**Integrity verification for Model Context Protocol (MCP) servers.**
 
 MCP DriftGuard answers a narrow security question:
 
@@ -9,6 +11,13 @@ MCP DriftGuard answers a narrow security question:
 An MCP server can change after review: tools can appear, schemas can widen, descriptions can acquire new authority language, server identity can change, and authorization metadata can move. DriftGuard records a deterministic baseline and compares the live server against it later.
 
 It is intentionally standalone: **no LLM, no DDC dependency, no hosted account, and no telemetry are required.**
+
+The Go CLI also offers an operator-bound MCP stdio server through `mcpdrift serve`.
+It exposes read-only inspection and verification tools, a policy resource and a
+review prompt. See [installation](INSTALL.md) and the execution-specific
+[acceptance matrix](MCP_DRIFTGUARD_ACCEPTANCE.md). Android Guardian is optional and
+is not required for these MCP operations. Remote and production acceptance remains
+unproven.
 
 ## About
 
@@ -27,7 +36,8 @@ v0.1 release candidate. DriftGuard speaks the current MCP 2026-07-28 stateless p
 - Tool annotation changes
 - Security-sensitive description changes
 - Added or removed resources and prompts
-- MCP protocol-version and advertised-version changes\n- TLS certificate and public-key identity changes
+- MCP protocol-version and advertised-version changes
+- TLS certificate and public-key identity changes
 - Authentication challenge changes
 - Protected-resource / authorization metadata changes when captured
 - Endpoint and TLS identity changes
@@ -269,3 +279,28 @@ See [COMMERCIAL.md](COMMERCIAL.md).
 Licensed under the **Apache License 2.0**. See [LICENSE](LICENSE).
 
 Apache-2.0 permits commercial use and redistribution, includes an explicit patent grant, preserves attribution and NOTICE obligations, and does not grant project branding rights beyond customary attribution.
+
+
+Local operational checks can compare an installed binary with independent
+read-only discovery of an operator-selected loopback service. See
+[local acceptance instructions](INSTALL.md#local-operational-acceptance-without-baseline-approval).
+The audit runner supports `--scope mcp` to exclude optional Guardian/Rust checks.
+Production monitoring remains gated on independently trusted, approved artifacts;
+no baseline is approved automatically and no persistent monitor is installed by
+these checks.
+
+The `mcpdrift serve` adapter requires an explicit trusted `--verify-key` and a
+signed approved baseline. Missing keys, unsigned artifacts, wrong keys, and
+signature/hash failures stop startup before stdin is read or discovery begins.
+See [stdio server configuration](INSTALL.md#driftguard-as-an-mcp-stdio-server).
+
+For one-shot, read-only monitoring of the existing Frequency Conduit endpoint,
+see [Production monitor operations](docs/PRODUCTION-MONITOR.md). Activation
+requires an independently approved signed baseline and external public trust key;
+the supplied hourly systemd timer is disabled by default.
+
+Customer-local monitor alerts use native desktop notifications by default, with a
+retryable SQLite drift/recovery journal and no remote service required. Agent mode
+returns structured actionable results without claiming unsolicited host push.
+A headless VPS cannot reach a customer device unaided. See
+[monitor setup and notification options](docs/PRODUCTION-MONITOR.md).

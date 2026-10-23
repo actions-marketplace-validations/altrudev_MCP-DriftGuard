@@ -1,3 +1,16 @@
+# v0.5.1 — private deployment preparation
+
+- Fix foreground review/pairing state, validation retry and visible enrollment status; preserve existing Android identity and debug signer.
+- Validate private authority/TLS-key state before listening; return generic HTTP refusals and add explicit real-network acceptance mode.
+- Prepare a restricted dedicated systemd unit. Deployment, device acceptance and Git commit are blocked by execution-environment restrictions; see DEPLOYMENT_STATUS.md.
+
+# v0.5.0 — online Android approval prototype
+
+- Explicit HTTPS server pairing and foreground polling, readable signed action review, signed Approve/Deny delivery and durable acceptance lookup.
+- Reuses independently attested candidate identity, authority/signer binding, revocation and replay enforcement; no automatic execution.
+- Device-scoped random transport tokens, bounded API, rate limits, atomic receipts, negative tests and setup/threat-model documentation.
+- APK retains the prior debug signer; physical-phone and deployment acceptance remain outstanding.
+
 # Changelog
 
 ## v0.1 public preview — 2026-09-14
@@ -48,3 +61,9 @@ The included demo server proves the central behavior:
 MCP DriftGuard Core is licensed under Apache-2.0.
 
 Created by Valentyn Rukhaylo / Altru.dev.
+
+## Frequency Guardian 0.2.0 diagnostic foundations
+
+- Separate attested P-256 candidate with external challenge and explicit bounded public certificate export.
+- Offline independent Rust DER inspection and pinned-root OpenSSL signature verification; no production enrollment.
+- Lost-device recovery specification with pre-provisioned offline recovery key and atomic revocation epoch.
